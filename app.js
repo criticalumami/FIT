@@ -6,7 +6,7 @@
 (function () {
   'use strict';
 
-  const STORAGE_KEY = 'fit_suckless_state_v1';
+  const STORAGE_KEY = 'fit_suckless_state_v2';
   const GH_TOKEN_KEY = 'fit_suckless_gh_token';
 
   // Complete 100% Bodyweight-Only Exercise Ladders & Form Guides
@@ -302,9 +302,9 @@
     ],
     schedule: [
       { day: 'MON', type: 'RR Full Body #1', rx: 'Pairs 1-3 (3x5-8 / 3x8-12) + Core Triplet (2 sets)', dur: '55m | 90s rest' },
-      { day: 'TUE', type: 'Run #1: Easy + Strides', rx: '5-6 km conversational Zone 2 + 4x20s fast strides at end', dur: '35m | HR <148' },
+      { day: 'TUE', type: 'Run #1: Easy + Strides', rx: '7-8 km conversational Zone 2 + 4x20s fast strides at end', dur: '45-50m | HR <150' },
       { day: 'WED', type: 'RR Full Body #2', rx: 'Pairs 1-3 (+1 rep target) + Core Triplet (2 sets)', dur: '55m | 90s rest' },
-      { day: 'THU', type: 'Run #2: Tempo / Threshold', rx: '7-8 km total (2km WU -> 3-4km Tempo -> 2km CD)', dur: '45m | HR 155-165' },
+      { day: 'THU', type: 'Run #2: Tempo / Threshold', rx: '8-9 km total (2km WU -> 4-5km Tempo -> 2km CD)', dur: '50-55m | HR 155-165' },
       { day: 'FRI', type: 'RR Full Body #3', rx: 'Pairs 1-3 (+1 rep target) + Core Triplet (2 sets)', dur: '55m | 90s rest' },
       { day: 'SAT', type: 'Run #3: Long Aerobic Run', rx: '10-12 km steady aerobic endurance pace', dur: '65m | HR 148-155' },
       { day: 'SUN', type: 'Skill & Mobility Day', rx: 'Handstand (10m) + Crow (5m) + L-Sit (60s) + Skin the Cat + Mobility', dur: '40m | Low CNS' }

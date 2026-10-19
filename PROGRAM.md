@@ -11,7 +11,7 @@
 | Day | Session | Duration | Focus & Targets |
 | :--- | :--- | :--- | :--- |
 | **Monday** | **Recommended Routine (Full Body)** | ~50–55 min | 3 Strength Pairs (`3x5–8` reps) + Core Triplet (`3x8–12`) |
-| **Tuesday** | **Run 1 — Easy Aerobic** | ~35–40 min | **`5–6 km` Easy Run** (HR `< 148 bpm`) + `4x 20s` strides at end |
+| **Tuesday** | **Run 1 — Easy Aerobic** | ~35–40 min | **`7–8 km` Easy Run** (HR `< 148 bpm`) + `4x 20s` strides at end |
 | **Wednesday** | **Recommended Routine (Full Body)** | ~50–55 min | 3 Strength Pairs (`3x5–8` reps) + Core Triplet (`3x8–12`) |
 | **Thursday** | **Run 2 — Quality / Tempo** | ~50–60 min | **`7–8 km` Run** (`2 km` easy → `3–4 km` brisk tempo at `155–165 bpm` → `2 km` easy) |
 | **Friday** | **Recommended Routine (Full Body)** | ~50–55 min | 3 Strength Pairs (`3x5–8` reps; leave 1–2 reps in reserve on legs) + Core Triplet |
