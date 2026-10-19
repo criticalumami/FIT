@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FIT // suckless training &amp; recomposition</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- dwm-style top bar -->
+  <header class="dwm-bar" role="banner">
+    <nav class="dwm-tags" role="tablist" aria-label="Workspace Views">
+      <button type="button" class="dwm-tag" role="tab" aria-selected="true" data-tab="status" title="Shortcut: 1">1:status</button>
+      <button type="button" class="dwm-tag" role="tab" aria-selected="false" data-tab="log" title="Shortcut: 2">2:log+edit</button>
+      <button type="button" class="dwm-tag" role="tab" aria-selected="false" data-tab="program" title="Shortcut: 3">3:program</button>
+      <button type="button" class="dwm-tag" role="tab" aria-selected="false" data-tab="form" title="Shortcut: 4">4:form+ladders</button>
+      <button type="button" class="dwm-tag" role="tab" aria-selected="false" data-tab="metrics" title="Shortcut: 5">5:runs+weight</button>
+      <button type="button" class="dwm-tag" role="tab" aria-selected="false" data-tab="sync" title="Shortcut: 6">6:sync+export</button>
+    </nav>
+    <div class="dwm-layout" title="Tiled Monochrome Layout">[]=</div>
+    <div class="dwm-status">
+      <div class="status-seg" id="bar-timer-wrap">
+        <span>TIMER:</span>
+        <strong id="bar-timer-display">01:30</strong>
+        <button type="button" class="btn-inline" id="bar-timer-toggle" title="Start/Pause Timer">start</button>
+        <button type="button" class="btn-inline" data-timer-set="90">90s</button>
+        <button type="button" class="btn-inline" data-timer-set="60">60s</button>
+        <button type="button" class="btn-inline" data-timer-set="30">30s</button>
+      </div>
+      <div class="status-seg">
+        <span>BW:</span>
+        <strong id="bar-bw">80.0kg</strong>
+        <span class="muted">-&gt; 73.5kg</span>
+      </div>
+      <div class="status-seg">
+        <span id="toast-status" role="status" aria-live="polite"></span>
+        <button type="button" class="btn-inline" id="theme-toggle" title="Toggle Dark/Light Monochrome (Shortcut: t)">inv</button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <!-- ==========================================
+         VIEW 1: STATUS & DASHBOARD
+         ========================================== -->
+    <section id="view-status" class="view-panel active" role="tabpanel">
+      <div class="stat-row" id="dashboard-kpis"></div>
+
+      <div class="tile-grid">
+        <!-- Recomposition Progress -->
+        <div class="tile tile-focus col-6">
+          <div class="tile-header">
+            <span>Recomposition Trajectory (88.0kg -&gt; 73.5kg)</span>
+            <span class="meta">100% Bodyweight Only</span>
+          </div>
+          <div class="tile-body">
+            <pre class="mono-pre" id="ascii-progress"></pre>
+            <div style="margin-top:8px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px;">
+              <span class="muted" id="weight-rate-summary">Rate: -1.86 kg/wk (Sep-Oct) | Target deficit: -800 to -1000 kcal/d</span>
+              <button type="button" class="btn-inline" data-goto-tab="metrics">+ Log Weight</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Next Workout Target (Auto-Calculated) -->
+        <div class="tile tile-focus col-6">
+          <div class="tile-header">
+            <span>Next RR Session Target (Auto-Overload)</span>
+            <button type="button" class="btn-inline" id="btn-prefill-next">Load into Logger -&gt;</button>
+          </div>
+          <div class="tile-body">
+            <div class="table-wrap">
+              <table id="next-target-table">
+                <thead>
+                  <tr>
+                    <th>Slot</th>
+                    <th>Current Progression</th>
+                    <th>Last Sets</th>
+                    <th>Next Target</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Active Progression Levels (Quick Switcher) -->
+        <div class="tile col-7">
+          <div class="tile-header">
+            <span>Active Exercise Progressions (Click to Change)</span>
+            <span class="meta">No Barbells / No Bands</span>
+          </div>
+          <div class="tile-body">
+            <div class="table-wrap">
+              <table id="active-progressions-table">
+                <thead>
+                  <tr>
+                    <th>Pair / Slot</th>
+                    <th>Active Variation</th>
+                    <th>Target Range</th>
+                    <th>Rule</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Weekly Schedule Snapshot -->
+        <div class="tile col-5">
+          <div class="tile-header">
+            <span>7-Day Microcycle</span>
+            <button type="button" class="btn-inline" data-goto-tab="program">Full Program -&gt;</button>
+          </div>
+          <div class="tile-body">
+            <div class="table-wrap">
+              <table id="mini-schedule-table">
+                <thead>
+                  <tr>
+                    <th>Day</th>
+                    <th>Modality</th>
+                    <th>Key Prescription</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==========================================
+         VIEW 2: LOG & EDIT WORKOUTS
+         ========================================== -->
+    <section id="view-log" class="view-panel" role="tabpanel">
+      <div class="tile-grid">
+        <!-- Quick Shorthand Parser (dmenu style) -->
+        <div class="tile tile-focus col-12">
+          <div class="tile-header">
+            <span>Quick Shorthand Parser (Paste &amp; Parse)</span>
+            <span class="meta">Format: pullu 4 4 4 squat 8 8 8 floorslide 9 9 9 dips 5 5 5 rows 7 7 7 diamond 4 4 4 plank 30sx2</span>
+          </div>
+          <div class="tile-body">
+            <form id="shorthand-form" action="#log" method="POST">
+              <div class="field">
+                <label for="shorthand-input">Shorthand Workout String:</label>
+                <div class="btn-row" style="width:100%;">
+                  <input type="text" id="shorthand-input" name="shorthand" style="flex:1;"
+                    autocorrect="off" autocapitalize="off" spellcheck="false"
+                    placeholder="pullu 5 4 4 singlelegraisedsquat 8 8 8 floorslide 10 10 10 dips 6 5 5 rows 8 7 7 diamond 5 4 4 plank 30sx2 sideplanks 15sx2 arch 8x2">
+                  <button type="submit">Parse into Form</button>
+                  <button type="button" class="btn-secondary" id="btn-parse-and-save">Parse &amp; Save Immediately</button>
+                </div>
+                <span class="hint" id="shorthand-hint">Parses reps directly into the structured form below.</span>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- Structured RR Session Form -->
+        <div class="tile col-12">
+          <div class="tile-header">
+            <span id="rr-form-title">Log / Edit Recommended Routine Session</span>
+            <div class="btn-row">
+              <button type="button" class="btn-inline" id="btn-fill-from-last">Copy Last Session +1 Rep</button>
+              <button type="button" class="btn-inline" id="btn-reset-rr-form">Clear / New</button>
+            </div>
+          </div>
+          <div class="tile-body">
+            <form id="rr-session-form" action="#log" method="POST">
+              <input type="hidden" id="rr-edit-id" name="edit_id" value="">
+
+              <fieldset>
+                <legend>Session Metadata</legend>
+                <div class="form-grid">
+                  <div class="field">
+                    <label for="rr-date">Date (Required):</label>
+                    <input type="date" id="rr-date" name="date" required>
+                  </div>
+                  <div class="field">
+                    <label for="rr-bw">Bodyweight (kg):</label>
+                    <input type="number" id="rr-bw" name="bw" step="0.1" inputmode="decimal" placeholder="80.0">
+                  </div>
+                  <div class="field">
+                    <label for="rr-notes">Session Notes / RPE:</label>
+                    <input type="text" id="rr-notes" name="notes" placeholder="Clean form, 90s rest between pairs">
+                  </div>
+                </div>
+              </fieldset>
+
+              <div class="form-grid">
+                <fieldset>
+                  <legend>Pair 1: Pull + Squat (90s rest)</legend>
+                  <div class="field" style="margin-bottom:8px;">
+                    <label for="rr-pull-prog">Pull Progression:</label>
+                    <select id="rr-pull-prog" name="pull_prog"></select>
+                  </div>
+                  <div class="field" style="margin-bottom:10px;">
+                    <label for="rr-pull-sets">Pull Sets (S1,S2,S3):</label>
+                    <input type="text" id="rr-pull-sets" name="pull_sets" required autocorrect="off" spellcheck="false" placeholder="4,4,4">
+                  </div>
+                  <div class="field" style="margin-bottom:8px;">
+                    <label for="rr-squat-prog">Squat Progression:</label>
+                    <select id="rr-squat-prog" name="squat_prog"></select>
+                  </div>
+                  <div class="field">
+                    <label for="rr-squat-sets">Squat Sets (S1,S2,S3):</label>
+                    <input type="text" id="rr-squat-sets" name="squat_sets" required autocorrect="off" spellcheck="false" placeholder="8,8,8 (/leg)">
+                  </div>
+                </fieldset>
+
+                <fieldset>
+                  <legend>Pair 2: Dip + Hinge (90s rest)</legend>
+                  <div class="field" style="margin-bottom:8px;">
+                    <label for="rr-dip-prog">Dip Progression:</label>
+                    <select id="rr-dip-prog" name="dip_prog"></select>
+                  </div>
+                  <div class="field" style="margin-bottom:10px;">
+                    <label for="rr-dip-sets">Dip Sets (S1,S2,S3):</label>
+                    <input type="text" id="rr-dip-sets" name="dip_sets" required autocorrect="off" spellcheck="false" placeholder="5,5,5">
+                  </div>
+                  <div class="field" style="margin-bottom:8px;">
+                    <label for="rr-hinge-prog">Hinge Progression:</label>
+                    <select id="rr-hinge-prog" name="hinge_prog"></select>
+                  </div>
+                  <div class="field">
+                    <label for="rr-hinge-sets">Hinge Sets (S1,S2,S3):</label>
+                    <input type="text" id="rr-hinge-sets" name="hinge_sets" required autocorrect="off" spellcheck="false" placeholder="9,9,9">
+                  </div>
+                </fieldset>
+
+                <fieldset>
+                  <legend>Pair 3: Row + Push-Up (90s rest)</legend>
+                  <div class="field" style="margin-bottom:8px;">
+                    <label for="rr-row-prog">Row Progression:</label>
+                    <select id="rr-row-prog" name="row_prog"></select>
+                  </div>
+                  <div class="field" style="margin-bottom:10px;">
+                    <label for="rr-row-sets">Row Sets (S1,S2,S3):</label>
+                    <input type="text" id="rr-row-sets" name="row_sets" required autocorrect="off" spellcheck="false" placeholder="7,7,7">
+                  </div>
+                  <div class="field" style="margin-bottom:8px;">
+                    <label for="rr-push-prog">Push-Up Progression:</label>
+                    <select id="rr-push-prog" name="push_prog"></select>
+                  </div>
+                  <div class="field">
+                    <label for="rr-push-sets">Push-Up Sets (S1,S2,S3):</label>
+                    <input type="text" id="rr-push-sets" name="push_sets" required autocorrect="off" spellcheck="false" placeholder="4,4,4">
+                  </div>
+                </fieldset>
+
+                <fieldset>
+                  <legend>Core Triplet (2 Sets, 60s rest)</legend>
+                  <div class="field" style="margin-bottom:8px;">
+                    <label for="rr-antiext">Anti-Extension (Plank / Ring Rollout):</label>
+                    <input type="text" id="rr-antiext" name="antiext" required placeholder="Plank 2x30s">
+                  </div>
+                  <div class="field" style="margin-bottom:8px;">
+                    <label for="rr-antirot">Anti-Rotation (Side Plank / Pallof):</label>
+                    <input type="text" id="rr-antirot" name="antirot" required placeholder="Side Plank 2x15s/side">
+                  </div>
+                  <div class="field">
+                    <label for="rr-ext">Extension (Arch Hold / Reverse Hyper):</label>
+                    <input type="text" id="rr-ext" name="ext" required placeholder="Arch/RevHyper 2x8">
+                  </div>
+                </fieldset>
+              </div>
+
+              <div class="btn-row">
+                <button type="submit" id="rr-submit-btn">Save RR Session</button>
+                <span class="muted" id="rr-form-feedback" aria-live="polite"></span>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- Logged RR Sessions Table -->
+        <div class="tile col-12">
+          <div class="tile-header">
+            <span>Logged RR Sessions History</span>
+            <span class="meta" id="rr-count-meta">1 session logged</span>
+          </div>
+          <div class="tile-body">
+            <div class="table-wrap">
+              <table id="rr-history-table">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>BW</th>
+                    <th>Pair 1: Pull / Squat</th>
+                    <th>Pair 2: Dip / Hinge</th>
+                    <th>Pair 3: Row / Push</th>
+                    <th>Core Triplet (2x)</th>
+                    <th>Vol</th>
+                    <th>Notes</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==========================================
+         VIEW 3: PROGRAM & SCHEDULE (EDITABLE)
+         ========================================== -->
+    <section id="view-program" class="view-panel" role="tabpanel">
+      <div class="tile-grid">
+        <div class="tile tile-focus col-12">
+          <div class="tile-header">
+            <span>Weekly Schedule (Edit Any Day Below)</span>
+            <button type="button" class="btn-inline" id="btn-reset-schedule">Reset Default Schedule</button>
+          </div>
+          <div class="tile-body">
+            <div class="table-wrap">
+              <table id="editable-schedule-table">
+                <thead>
+                  <tr>
+                    <th style="width:90px;">Day</th>
+                    <th style="width:190px;">Session Type</th>
+                    <th>Target Prescription &amp; Rules (Click cell to edit)</th>
+                    <th style="width:130px;">Duration / HR</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Program Architecture & Rules -->
+        <div class="tile col-6">
+          <div class="tile-header">
+            <span>Recommended Routine Architecture (100% Bodyweight)</span>
+            <span class="meta">Mon / Wed / Fri</span>
+          </div>
+          <div class="tile-body">
+            <pre class="mono-pre">[WARM-UP // 5-8 MIN]
+1. Yuri's Shoulder Dislocates (Towel/Stick) : 10 reps
+2. Squat Sky Reaches                        : 10 reps/side
+3. GMB Wrist Prep (Rocks, Circles, Pulses)  : 10 reps each
+4. Deadbugs                                 : 30s
+5. Arch Hangs / Scapular Pulls              : 8-10 reps
+6. Support Hold (Parallel Bars / Chairs)    : 30-60s
+
+[STRENGTH PAIRS // 3 SETS EACH // 90s REST BETWEEN EXERCISES]
+Pair 1: Pull-Up Progression (3x5-8)  + Squat Progression (3x5-8)
+Pair 2: Dip Progression (3x5-8)      + Bodyweight Hinge (3x8-12)
+Pair 3: Row Progression (3x8-12)     + Push-Up Progression (3x5-8)
+
+[CORE TRIPLET // 2 SETS // 60s REST]
+1. Anti-Extension : Plank (30-60s) -&gt; Ab Walkout
+2. Anti-Rotation  : Side Plank (15-45s/side) -&gt; Copenhagen Plank
+3. Extension      : Arch Hold / Sofa Reverse Hyper (8-12 reps)</pre>
+          </div>
+        </div>
+
+        <!-- Editable Custom Program Notes & Phase 2 Protocol -->
+        <div class="tile col-6">
+          <div class="tile-header">
+            <span>Custom Program Notes &amp; Phase 2 Adjustments</span>
+            <button type="button" class="btn-inline" id="btn-save-program-notes">Save Notes</button>
+          </div>
+          <div class="tile-body">
+            <form id="program-notes-form" action="#program" method="POST">
+              <div class="field">
+                <label for="program-notes-area">Editable Program Scratchpad &amp; Rules (Persisted locally):</label>
+                <textarea id="program-notes-area" name="program_notes" style="min-height:225px;"></textarea>
+              </div>
+              <div class="btn-row">
+                <button type="submit">Save Program Notes</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==========================================
+         VIEW 4: FORM GUIDES & PROGRESSION LADDERS
+         ========================================== -->
+    <section id="view-form" class="view-panel" role="tabpanel">
+      <div class="filter-bar" role="radiogroup" aria-label="Filter Exercise Category">
+        <button type="button" class="btn-inline active" data-form-filter="all">All (11)</button>
+        <button type="button" class="btn-inline" data-form-filter="pair1">Pair 1: Pull + Squat</button>
+        <button type="button" class="btn-inline" data-form-filter="pair2">Pair 2: Dip + Hinge</button>
+        <button type="button" class="btn-inline" data-form-filter="pair3">Pair 3: Row + Push</button>
+        <button type="button" class="btn-inline" data-form-filter="core">Core Triplet</button>
+        <button type="button" class="btn-inline" data-form-filter="skill">Warm-Up &amp; Sunday Skills</button>
+      </div>
+
+      <div class="tile-grid" id="form-guides-container"></div>
+    </section>
+
+    <!-- ==========================================
+         VIEW 5: RUNS, WEIGHT & METRICS
+         ========================================== -->
+    <section id="view-metrics" class="view-panel" role="tabpanel">
+      <div class="tile-grid">
+        <!-- Weight Chart & Logger -->
+        <div class="tile tile-focus col-6">
+          <div class="tile-header">
+            <span>Bodyweight Log &amp; Trend Chart</span>
+            <span class="meta">Goal: 73.0 - 74.0 kg</span>
+          </div>
+          <div class="tile-body">
+            <div id="weight-svg-wrap" style="margin-bottom:10px; border:1px solid var(--border); background:var(--bg); padding:6px;"></div>
+
+            <form id="weight-form" action="#metrics" method="POST" style="margin-bottom:10px;">
+              <fieldset>
+                <legend>Log Weigh-In</legend>
+                <div class="form-grid">
+                  <div class="field">
+                    <label for="wt-date">Date:</label>
+                    <input type="date" id="wt-date" name="date" required>
+                  </div>
+                  <div class="field">
+                    <label for="wt-val">Weight (kg):</label>
+                    <input type="number" id="wt-val" name="kg" step="0.1" inputmode="decimal" required placeholder="79.6">
+                  </div>
+                  <div class="field">
+                    <label for="wt-kcal">Intake (kcal, opt):</label>
+                    <input type="number" id="wt-kcal" name="kcal" step="10" inputmode="numeric" placeholder="2400">
+                  </div>
+                </div>
+                <div class="btn-row" style="margin-top:8px;">
+                  <button type="submit">Add Weigh-In</button>
+                </div>
+              </fieldset>
+            </form>
+
+            <div class="table-wrap">
+              <table id="weight-table">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Weight (kg)</th>
+                    <th>Delta</th>
+                    <th>Intake</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Running Log -->
+        <div class="tile col-6">
+          <div class="tile-header">
+            <span>Running Log (Tue Easy / Thu Tempo / Sat Long)</span>
+            <span class="meta" id="run-summary-meta"></span>
+          </div>
+          <div class="tile-body">
+            <form id="run-form" action="#metrics" method="POST" style="margin-bottom:10px;">
+              <fieldset>
+                <legend>Log Run</legend>
+                <div class="form-grid">
+                  <div class="field">
+                    <label for="run-date">Date:</label>
+                    <input type="date" id="run-date" name="date" required>
+                  </div>
+                  <div class="field">
+                    <label for="run-type">Run Type:</label>
+                    <select id="run-type" name="type">
+                      <option value="Easy Run (Z2 + Strides)">Easy Run (Z2 + Strides)</option>
+                      <option value="Tempo / Threshold Run">Tempo / Threshold Run</option>
+                      <option value="Long Aerobic Run">Long Aerobic Run</option>
+                      <option value="Recovery Jog">Recovery Jog</option>
+                    </select>
+                  </div>
+                  <div class="field">
+                    <label for="run-km">Distance (km):</label>
+                    <input type="number" id="run-km" name="km" step="0.01" inputmode="decimal" required placeholder="6.00">
+                  </div>
+                  <div class="field">
+                    <label for="run-min">Duration (min):</label>
+                    <input type="number" id="run-min" name="min" step="0.1" inputmode="decimal" required placeholder="36.0">
+                  </div>
+                  <div class="field">
+                    <label for="run-hr">Avg HR (bpm):</label>
+                    <input type="number" id="run-hr" name="hr" inputmode="numeric" placeholder="146">
+                  </div>
+                  <div class="field">
+                    <label for="run-notes">Notes:</label>
+                    <input type="text" id="run-notes" name="notes" placeholder="4x20s strides at end">
+                  </div>
+                </div>
+                <div class="btn-row" style="margin-top:8px;">
+                  <button type="submit">Add Run</button>
+                </div>
+              </fieldset>
+            </form>
+
+            <div class="table-wrap">
+              <table id="run-table">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Type</th>
+                    <th>Dist</th>
+                    <th>Time</th>
+                    <th>Pace</th>
+                    <th>HR</th>
+                    <th>Del</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==========================================
+         VIEW 6: SYNC, EXPORT & GITHUB API
+         ========================================== -->
+    <section id="view-sync" class="view-panel" role="tabpanel">
+      <div class="tile-grid">
+        <div class="tile tile-focus col-6">
+          <div class="tile-header">
+            <span>Export / Import Plain-Text &amp; JSON</span>
+            <span class="meta">Zero Lock-In</span>
+          </div>
+          <div class="tile-body">
+            <p>All changes are saved automatically in browser <code>localStorage</code>. Export anytime to Markdown (Obsidian compatible), CSV (<code>rr_log.csv</code>), or full JSON state.</p>
+            <div class="btn-row" style="margin-bottom:10px;">
+              <button type="button" class="btn" id="btn-export-md">Download WORKOUT_LOG.md</button>
+              <button type="button" class="btn-secondary" id="btn-export-csv">Download rr_log.csv</button>
+              <button type="button" class="btn-secondary" id="btn-export-json">Download fit_state.json</button>
+              <button type="button" class="btn-secondary" id="btn-copy-md">Copy Markdown to Clipboard</button>
+            </div>
+            <div class="field" style="margin-bottom:10px;">
+              <label for="export-preview">Live Markdown / JSON Preview:</label>
+              <textarea id="export-preview" style="min-height:170px;" readonly></textarea>
+            </div>
+            <form id="import-json-form" action="#sync" method="POST">
+              <fieldset>
+                <legend>Restore / Import State from JSON</legend>
+                <div class="field" style="margin-bottom:8px;">
+                  <label for="import-json-input">Paste JSON state below:</label>
+                  <textarea id="import-json-input" name="json_state" placeholder='{"rrSessions": [...]}'></textarea>
+                </div>
+                <div class="btn-row">
+                  <button type="submit">Import State</button>
+                  <button type="button" class="btn-secondary" id="btn-factory-reset">Reset to Baseline Defaults</button>
+                </div>
+              </fieldset>
+            </form>
+          </div>
+        </div>
+
+        <div class="tile col-6">
+          <div class="tile-header">
+            <span>Direct GitHub Repository Sync (Optional)</span>
+            <span class="meta">criticalumami/FIT</span>
+          </div>
+          <div class="tile-body">
+            <p>Push your logged sessions directly from any browser to <code>criticalumami/FIT</code> on GitHub (`data.json` &amp; `WORKOUT_LOG.md`) using a fine-grained Personal Access Token (stored only in your local browser).</p>
+            <form id="gh-sync-form" action="#sync" method="POST">
+              <fieldset>
+                <legend>GitHub API Credentials</legend>
+                <div class="form-grid">
+                  <div class="field">
+                    <label for="gh-repo">Repository (owner/repo):</label>
+                    <input type="text" id="gh-repo" name="repo" value="criticalumami/FIT" autocorrect="off" autocapitalize="off" spellcheck="false" required>
+                  </div>
+                  <div class="field">
+                    <label for="gh-branch">Branch:</label>
+                    <input type="text" id="gh-branch" name="branch" value="main" autocorrect="off" autocapitalize="off" spellcheck="false" required>
+                  </div>
+                </div>
+                <div class="field" style="margin-top:8px;">
+                  <label for="gh-token">GitHub Personal Access Token (Contents Read/Write):</label>
+                  <input type="password" id="gh-token" name="token" autocomplete="off" placeholder="github_pat_...">
+                  <span class="hint">Never leaves your device except to authenticate with api.github.com.</span>
+                </div>
+                <div class="btn-row" style="margin-top:10px;">
+                  <button type="submit">Push State to GitHub</button>
+                  <button type="button" class="btn-secondary" id="btn-gh-pull">Pull Latest from GitHub</button>
+                </div>
+                <p id="gh-sync-status" class="muted" style="margin-top:8px;" aria-live="polite"></p>
+              </fieldset>
+            </form>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div>FIT // suckless grayscale tracker // 100% bodyweight RR + running</div>
+    <div>Keys: [1-6] switch view | [t] invert grayscale | [space] start/pause timer</div>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
