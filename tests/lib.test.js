@@ -1,4 +1,4 @@
-// Run: node --test tests/
+// Run: node --test tests/*.test.js
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const L = require('../lib.js');

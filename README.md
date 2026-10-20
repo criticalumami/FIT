@@ -66,7 +66,7 @@ python3 fit.py health health_export/apple_health_export/Export.xml --since 2026-
 ## Tests
 
 ```bash
-node --test tests/
+node --test tests/*.test.js
 ```
 
 ```bash
