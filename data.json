@@ -67,7 +67,13 @@
       "id": "w4",
       "date": "2026-10-16",
       "kg": 80,
-      "kcal": 2400
+      "kcal": null
+    },
+    {
+      "id": "w5",
+      "date": "2026-10-19",
+      "kg": 79,
+      "kcal": null
     }
   ],
   "runLog": [
@@ -144,6 +150,15 @@
       "notes": "Apple Health"
     },
     {
+      "id": "r8b",
+      "date": "2026-10-17",
+      "type": "Easy Run (Z2 + Strides)",
+      "km": 7.88,
+      "min": 60.1,
+      "hr": 154,
+      "notes": "Apple Health"
+    },
+    {
       "id": "r9",
       "date": "2026-10-19",
       "type": "Recovery Jog",
@@ -151,6 +166,15 @@
       "min": 17.5,
       "hr": 147,
       "notes": "Warm-up run before RR #1"
+    },
+    {
+      "id": "r10",
+      "date": "2026-10-20",
+      "type": "Easy Run (Zone 2)",
+      "km": 8.02,
+      "min": 66.1,
+      "hr": 142,
+      "notes": "Pure Zone 2 aerobic run (max HR 151 bpm), skipped strides"
     }
   ],
   "schedule": [

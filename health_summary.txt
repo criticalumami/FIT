@@ -8,47 +8,73 @@
 }
 
 === RECORD COUNTS & LATEST ===
-HKQuantityTypeIdentifierBasalEnergyBurned: 69646 records | latest: 2026-10-16 09:05:33 +0300 = 25.195 kcal (SSW0)
-HKQuantityTypeIdentifierDistanceWalkingRunning: 59741 records | latest: 2026-10-16 09:06:32 +0300 = 0.200423 km (SS02)
-HKQuantityTypeIdentifierWalkingSpeed: 56701 records | latest: 2026-10-16 09:12:02 +0300 = 2.7 km/hr (SS02)
-HKQuantityTypeIdentifierWalkingStepLength: 56696 records | latest: 2026-10-16 09:12:02 +0300 = 51 cm (SS02)
-HKQuantityTypeIdentifierActiveEnergyBurned: 54759 records | latest: 2026-10-16 09:09:08 +0300 = 18.45 kcal (SSW0)
-HKQuantityTypeIdentifierStepCount: 53968 records | latest: 2026-10-16 09:06:32 +0300 = 311 count (SS02)
-HKQuantityTypeIdentifierWalkingDoubleSupportPercentage: 47238 records | latest: 2026-10-16 09:08:27 +0300 = 0.321 % (SS02)
-HKQuantityTypeIdentifierPhysicalEffort: 37340 records | latest: 2026-10-16 09:21:21 +0300 = 5.4 kcal/hr·kg (SSW0)
-HKQuantityTypeIdentifierHeartRate: 30228 records | latest: 2026-10-16 09:24:53 +0300 = 67 count/min (SSW0)
-HKQuantityTypeIdentifierWalkingAsymmetryPercentage: 20839 records | latest: 2026-10-16 09:09:25 +0300 = 0.77 % (SS02)
-HKQuantityTypeIdentifierRunningSpeed: 10801 records | latest: 2026-10-14 10:28:18 +0300 = 4.4187 km/hr (SSW0)
-HKQuantityTypeIdentifierRunningPower: 10779 records | latest: 2026-10-14 10:28:20 +0300 = 233 W (SSW0)
-HKQuantityTypeIdentifierHeadphoneAudioExposure: 9226 records | latest: 2026-10-16 09:07:37 +0300 = 73.7979 dBASPL (SS02)
-HKQuantityTypeIdentifierRunningVerticalOscillation: 4647 records | latest: 2026-10-14 10:28:07 +0300 = 10 cm (SSW0)
-HKQuantityTypeIdentifierRunningGroundContactTime: 4454 records | latest: 2026-10-14 10:28:07 +0300 = 238 ms (SSW0)
-HKQuantityTypeIdentifierFlightsClimbed: 4060 records | latest: 2026-10-16 09:09:21 +0300 = 1 count (SS02)
-HKQuantityTypeIdentifierRunningStrideLength: 4020 records | latest: 2026-10-14 10:28:07 +0300 = 1.07 m (SSW0)
-HKQuantityTypeIdentifierAppleExerciseTime: 3985 records | latest: 2026-10-16 09:09:00 +0300 = 1 min (SSW0)
-HKQuantityTypeIdentifierAppleStandTime: 2856 records | latest: 2026-10-16 09:20:00 +0300 = 2 min (SSW0)
-HKQuantityTypeIdentifierRespiratoryRate: 1241 records | latest: 2026-10-16 06:30:30 +0300 = 16.5 count/min (SSW0)
-HKQuantityTypeIdentifierEnvironmentalAudioExposure: 927 records | latest: 2026-10-16 08:25:24 +0300 = 62.511 dBASPL (SSW0)
-HKQuantityTypeIdentifierTimeInDaylight: 820 records | latest: 2026-10-16 09:11:29 +0300 = 5 min (SSW0)
-HKCategoryTypeIdentifierSleepAnalysis: 748 records | latest: 2026-10-16 06:33:00 +0300 = HKCategoryValueSleepAnalysisAsleepCore  (SSW0)
-HKCategoryTypeIdentifierAppleStandHour: 732 records | latest: 2026-10-16 09:00:00 +0300 = HKCategoryValueAppleStandHourStood  (SSW0)
-HKQuantityTypeIdentifierStairDescentSpeed: 376 records | latest: 2026-10-15 16:56:13 +0300 = 0.283841 m/s (SSW0)
-HKQuantityTypeIdentifierOxygenSaturation: 369 records | latest: 2026-10-16 06:27:49 +0300 = 0.96 % (SSW0)
-HKQuantityTypeIdentifierStairAscentSpeed: 268 records | latest: 2026-10-15 17:12:55 +0300 = 0.262067 m/s (SSW0)
-HKQuantityTypeIdentifierEnvironmentalSoundReduction: 238 records | latest: 2026-10-15 20:27:36 +0300 = 28.0734 dBASPL (SSW0)
-HKQuantityTypeIdentifierHeartRateVariabilitySDNN: 237 records | latest: 2026-10-16 09:24:02 +0300 = 44.2922 ms (SSW0)
+HKQuantityTypeIdentifierBasalEnergyBurned: 74884 records | latest: 2026-10-20 11:41:36 +0300 = 25.696 kcal (SSW0)
+HKQuantityTypeIdentifierDistanceWalkingRunning: 65472 records | latest: 2026-10-20 11:52:43 +0300 = 0.601556 km (SSW0)
+HKQuantityTypeIdentifierActiveEnergyBurned: 59834 records | latest: 2026-10-20 11:49:28 +0300 = 66.954 kcal (SSW0)
+HKQuantityTypeIdentifierStepCount: 58593 records | latest: 2026-10-20 11:52:43 +0300 = 766 count (SSW0)
+HKQuantityTypeIdentifierWalkingSpeed: 57142 records | latest: 2026-10-19 20:36:33 +0300 = 2.124 km/hr (SS02)
+HKQuantityTypeIdentifierWalkingStepLength: 57137 records | latest: 2026-10-19 20:36:33 +0300 = 49 cm (SS02)
+HKQuantityTypeIdentifierWalkingDoubleSupportPercentage: 47639 records | latest: 2026-10-19 20:35:32 +0300 = 0.32 % (SS02)
+HKQuantityTypeIdentifierPhysicalEffort: 42065 records | latest: 2026-10-20 12:05:06 +0300 = 3.2 kcal/hr·kg (SSW0)
+HKQuantityTypeIdentifierHeartRate: 36740 records | latest: 2026-10-20 11:29:42 +0300 = 122 count/min (SSW0)
+HKQuantityTypeIdentifierWalkingAsymmetryPercentage: 21103 records | latest: 2026-10-19 20:29:42 +0300 = 0 % (SS02)
+HKQuantityTypeIdentifierRunningSpeed: 13750 records | latest: 2026-10-20 11:26:21 +0300 = 7.6116 km/hr (SSW0)
+HKQuantityTypeIdentifierRunningPower: 13728 records | latest: 2026-10-20 11:26:21 +0300 = 154 W (SSW0)
+HKQuantityTypeIdentifierHeadphoneAudioExposure: 9447 records | latest: 2026-10-20 11:58:13 +0300 = 75.5658 dBASPL (SS02)
+HKQuantityTypeIdentifierRunningVerticalOscillation: 6012 records | latest: 2026-10-20 11:26:11 +0300 = 9 cm (SSW0)
+HKQuantityTypeIdentifierRunningGroundContactTime: 5785 records | latest: 2026-10-20 11:26:16 +0300 = 302 ms (SSW0)
+HKQuantityTypeIdentifierRunningStrideLength: 5002 records | latest: 2026-10-20 11:24:29 +0300 = 0.78 m (SSW0)
+HKQuantityTypeIdentifierAppleExerciseTime: 4674 records | latest: 2026-10-20 11:57:00 +0300 = 1 min (SSW0)
+HKQuantityTypeIdentifierFlightsClimbed: 4112 records | latest: 2026-10-20 11:50:35 +0300 = 1 count (SS02)
+HKQuantityTypeIdentifierAppleStandTime: 3229 records | latest: 2026-10-20 12:00:00 +0300 = 4 min (SSW0)
+HKQuantityTypeIdentifierRespiratoryRate: 1433 records | latest: 2026-10-20 08:17:31 +0300 = 14.5 count/min (SSW0)
+HKQuantityTypeIdentifierEnvironmentalAudioExposure: 1089 records | latest: 2026-10-19 21:43:48 +0300 = 43.8994 dBASPL (SSW0)
+HKQuantityTypeIdentifierTimeInDaylight: 1011 records | latest: 2026-10-19 17:45:31 +0300 = 4 min (SSW0)
+HKCategoryTypeIdentifierSleepAnalysis: 851 records | latest: 2026-10-20 08:25:31 +0300 = HKCategoryValueSleepAnalysisAsleepCore  (SSW0)
+HKCategoryTypeIdentifierAppleStandHour: 826 records | latest: 2026-10-20 12:00:00 +0300 = HKCategoryValueAppleStandHourStood  (SSW0)
+HKQuantityTypeIdentifierOxygenSaturation: 419 records | latest: 2026-10-19 19:05:16 +0300 = 0.98 % (SSW0)
+HKQuantityTypeIdentifierStairDescentSpeed: 408 records | latest: 2026-10-20 10:18:08 +0300 = 0.292343 m/s (SSW0)
+HKQuantityTypeIdentifierStairAscentSpeed: 300 records | latest: 2026-10-19 17:55:29 +0300 = 0.315501 m/s (SSW0)
+HKQuantityTypeIdentifierEnvironmentalSoundReduction: 288 records | latest: 2026-10-19 20:23:53 +0300 = 28.7257 dBASPL (SSW0)
+HKQuantityTypeIdentifierHeartRateVariabilitySDNN: 272 records | latest: 2026-10-19 18:48:32 +0300 = 28.359 ms (SSW0)
 HKQuantityTypeIdentifierAppleWalkingSteadiness: 121 records | latest: 2026-10-09 03:00:00 +0300 = 0.913305 % (SS02)
-HKQuantityTypeIdentifierVO2Max: 60 records | latest: 2026-10-16 00:00:00 +0300 = 38.9581 mL/min·kg (Google Health)
+HKQuantityTypeIdentifierDietaryEnergyConsumed: 85 records | latest: 2026-10-19 18:00:00 +0300 = 450 kcal (Lose It!)
+HKQuantityTypeIdentifierVO2Max: 70 records | latest: 2026-10-20 11:26:25 +0300 = 39.81 mL/min·kg (SSW0)
+HKQuantityTypeIdentifierDietaryFatTotal: 68 records | latest: 2026-10-19 18:00:00 +0300 = 14.898 g (Lose It!)
+HKQuantityTypeIdentifierDietaryProtein: 68 records | latest: 2026-10-19 18:00:00 +0300 = 7.104 g (Lose It!)
+HKQuantityTypeIdentifierDietaryCarbohydrates: 56 records | latest: 2026-10-19 18:00:00 +0300 = 6.453 g (Lose It!)
+HKQuantityTypeIdentifierDietaryFatSaturated: 50 records | latest: 2026-10-19 18:00:00 +0300 = 2.067 g (Lose It!)
+HKQuantityTypeIdentifierDietarySodium: 44 records | latest: 2026-10-19 18:00:00 +0300 = 243.9 mg (Lose It!)
+HKQuantityTypeIdentifierWalkingHeartRateAverage: 32 records | latest: 2026-10-19 00:02:00 +0300 = 80 count/min (SSW0)
 HKCategoryTypeIdentifierMindfulSession: 30 records | latest: 2026-10-13 21:17:02 +0300 = HKCategoryValueNotApplicable  (SSW0)
-HKQuantityTypeIdentifierWalkingHeartRateAverage: 29 records | latest: 2026-10-16 00:00:22 +0300 = 76.5 count/min (SSW0)
-HKQuantityTypeIdentifierRestingHeartRate: 25 records | latest: 2026-10-16 00:00:22 +0300 = 59 count/min (SSW0)
-HKQuantityTypeIdentifierEstimatedWorkoutEffortScore: 18 records | latest: 2026-10-14 09:13:01 +0300 = 6 appleEffortScore (SSW0)
+HKQuantityTypeIdentifierRestingHeartRate: 28 records | latest: 2026-10-19 00:02:00 +0300 = 57 count/min (SSW0)
+HKQuantityTypeIdentifierDietarySugar: 26 records | latest: 2026-10-19 18:00:00 +0300 = 1.254 g (Lose It!)
+HKQuantityTypeIdentifierDietaryFiber: 24 records | latest: 2026-10-19 18:00:00 +0300 = 2.4 g (Lose It!)
+HKQuantityTypeIdentifierEstimatedWorkoutEffortScore: 22 records | latest: 2026-10-20 10:20:19 +0300 = 5 appleEffortScore (SSW0)
 HKCategoryTypeIdentifierHeadphoneAudioExposureEvent: 17 records | latest: 2026-10-12 09:35:55 +0300 = HKCategoryValueHeadphoneAudioExposureEventSevenDayLimit  (SS02)
-HKCategoryTypeIdentifierAudioExposureEvent: 8 records | latest: 2026-10-08 12:01:06 +0300 = HKCategoryValueEnvironmentalAudioExposureEventMomentaryLimit  (SSW0)
-HKQuantityTypeIdentifierBodyMass: 6 records | latest: 2026-10-16 08:47:05 +0300 = 80 kg (Google Health)
-HKQuantityTypeIdentifierHeartRateRecoveryOneMinute: 5 records | latest: 2026-10-10 11:47:36 +0300 = 21.5375 count/min (SSW0)
-HKQuantityTypeIdentifierSixMinuteWalkTestDistance: 4 records | latest: 2026-10-09 09:12:15 +0300 = 500 m (SS02)
+HKQuantityTypeIdentifierDietaryFatPolyunsaturated: 16 records | latest: 2026-10-19 18:00:00 +0300 = 4.7082 g (Lose It!)
+HKQuantityTypeIdentifierDietaryVitaminB6: 16 records | latest: 2026-10-19 18:00:00 +0300 = 0.0768 mg (Lose It!)
+HKQuantityTypeIdentifierDietaryCalcium: 16 records | latest: 2026-10-19 18:00:00 +0300 = 16.2 mg (Lose It!)
+HKQuantityTypeIdentifierDietaryIron: 16 records | latest: 2026-10-19 18:00:00 +0300 = 0.678 mg (Lose It!)
+HKQuantityTypeIdentifierDietaryThiamin: 16 records | latest: 2026-10-19 18:00:00 +0300 = 0.1314 mg (Lose It!)
+HKQuantityTypeIdentifierDietaryRiboflavin: 16 records | latest: 2026-10-19 18:00:00 +0300 = 0.0294 mg (Lose It!)
+HKQuantityTypeIdentifierDietaryNiacin: 16 records | latest: 2026-10-19 18:00:00 +0300 = 4.0575 mg (Lose It!)
+HKQuantityTypeIdentifierDietaryFolate: 16 records | latest: 2026-10-19 18:00:00 +0300 = 43.5 mcg (Lose It!)
+HKQuantityTypeIdentifierDietaryPhosphorus: 16 records | latest: 2026-10-19 18:00:00 +0300 = 107.4 mg (Lose It!)
+HKQuantityTypeIdentifierDietaryMagnesium: 16 records | latest: 2026-10-19 18:00:00 +0300 = 52.8 mg (Lose It!)
+HKQuantityTypeIdentifierDietaryZinc: 16 records | latest: 2026-10-19 18:00:00 +0300 = 0.993 mg (Lose It!)
+HKQuantityTypeIdentifierDietaryPotassium: 16 records | latest: 2026-10-19 18:00:00 +0300 = 197.4 mg (Lose It!)
+HKQuantityTypeIdentifierDietaryFatMonounsaturated: 14 records | latest: 2026-10-19 18:00:00 +0300 = 7.392 g (Lose It!)
+HKQuantityTypeIdentifierDietaryCholesterol: 14 records | latest: 2026-10-19 18:00:00 +0300 = 50 mg (Lose It!)
+HKQuantityTypeIdentifierDietaryVitaminC: 12 records | latest: 2026-10-19 18:00:00 +0300 = 10.266 mg (Lose It!)
+HKCategoryTypeIdentifierAudioExposureEvent: 11 records | latest: 2026-10-19 15:05:38 +0300 = HKCategoryValueEnvironmentalAudioExposureEventMomentaryLimit  (SSW0)
+HKQuantityTypeIdentifierBodyMass: 9 records | latest: 2026-10-19 20:29:21 +0300 = 79 kg (Google Health)
+HKQuantityTypeIdentifierDietaryVitaminA: 8 records | latest: 2026-10-19 18:00:00 +0300 = 3.54 mcg (Lose It!)
+HKQuantityTypeIdentifierHeartRateRecoveryOneMinute: 6 records | latest: 2026-10-20 11:29:23 +0300 = 23.7677 count/min (SSW0)
+HKQuantityTypeIdentifierSixMinuteWalkTestDistance: 5 records | latest: 2026-10-16 11:53:39 +0300 = 500 m (SS02)
+HKQuantityTypeIdentifierDietaryCaffeine: 4 records | latest: 2026-10-16 12:00:00 +0300 = 508.8 mg (Lose It!)
 HKQuantityTypeIdentifierHeight: 3 records | latest: 2026-09-24 09:18:00 +0300 = 171 cm (Health)
+HKQuantityTypeIdentifierDietaryVitaminB12: 2 records | latest: 2026-10-18 12:00:00 +0300 = 21.13 mcg (Lose It!)
 HKCategoryTypeIdentifierHighHeartRateEvent: 2 records | latest: 2026-10-02 03:14:13 +0300 = HKCategoryValueNotApplicable  (SSW0)
 HKDataTypeSleepDurationGoal: 1 records | latest: 2026-09-13 16:34:14 +0300 = 8 hr (Sleep)
 
@@ -59,18 +85,18 @@ HKDataTypeSleepDurationGoal: 1 records | latest: 2026-09-13 16:34:14 +0300 = 8 h
   2026-09-24 09:18:00 +0300: 171.0 cm [Health]
   2026-09-24 09:18:00 +0300: 172.0 cm [Health]
 
---- HKQuantityTypeIdentifierBodyMass (total 6) ---
+--- HKQuantityTypeIdentifierBodyMass (total 9) ---
+  2017-07-03 22:59:59 +0300: 80.0 kg [Lose It!]
   2024-07-30 08:30:47 +0300: 81.0 kg [SS02]
   2026-09-03 10:53:55 +0300: 88.0 kg [Google Health]
   2026-09-17 07:37:14 +0300: 85.0 kg [SS02]
   2026-09-24 09:17:00 +0300: 81.0 kg [Health]
   2026-09-24 09:17:00 +0300: 81.0 kg [Health]
   2026-10-16 08:47:05 +0300: 80.0 kg [Google Health]
+  2026-10-16 18:00:54 +0300: 80.0 kg [Lose It!]
+  2026-10-19 20:29:21 +0300: 79.0 kg [Google Health]
 
---- HKQuantityTypeIdentifierRestingHeartRate (total 25) ---
-  2026-09-29 00:06:50 +0300: 64.0 count/min [SSW0]
-  2026-09-30 00:00:31 +0300: 70.0 count/min [SSW0]
-  2026-10-01 07:13:47 +0300: 67.0 count/min [SSW0]
+--- HKQuantityTypeIdentifierRestingHeartRate (total 28) ---
   2026-10-02 00:03:57 +0300: 98.0 count/min [SSW0]
   2026-10-05 00:03:45 +0300: 57.0 count/min [SSW0]
   2026-10-06 00:02:27 +0300: 64.0 count/min [SSW0]
@@ -83,28 +109,28 @@ HKDataTypeSleepDurationGoal: 1 records | latest: 2026-09-13 16:34:14 +0300 = 8 h
   2026-10-14 00:14:16 +0300: 72.0 count/min [SSW0]
   2026-10-15 00:02:25 +0300: 67.0 count/min [SSW0]
   2026-10-16 00:00:22 +0300: 59.0 count/min [SSW0]
+  2026-10-17 00:02:10 +0300: 60.0 count/min [SSW0]
+  2026-10-18 00:01:33 +0300: 61.0 count/min [SSW0]
+  2026-10-19 00:02:00 +0300: 57.0 count/min [SSW0]
 
---- HKQuantityTypeIdentifierVO2Max (total 60) ---
-  2026-10-11 00:00:00 +0300: 39.1751 mL/min·kg [Google Health]
-  2026-10-11 09:22:04 +0300: 38.68 mL/min·kg [SSW0]
-  2026-10-11 18:05:22 +0300: 38.79 mL/min·kg [SSW0]
-  2026-10-12 00:00:00 +0300: 39.1751 mL/min·kg [Google Health]
-  2026-10-12 12:29:01 +0300: 38.74 mL/min·kg [SSW0]
-  2026-10-12 20:22:24 +0300: 38.66 mL/min·kg [SSW0]
-  2026-10-13 00:00:00 +0300: 38.9388 mL/min·kg [Google Health]
-  2026-10-13 13:24:27 +0300: 38.65 mL/min·kg [SSW0]
-  2026-10-14 00:00:00 +0300: 38.8777 mL/min·kg [Google Health]
-  2026-10-14 08:58:45 +0300: 38.91 mL/min·kg [SSW0]
+--- HKQuantityTypeIdentifierVO2Max (total 70) ---
   2026-10-14 10:28:21 +0300: 39.03 mL/min·kg [SSW0]
   2026-10-14 16:22:55 +0300: 39.05 mL/min·kg [SSW0]
   2026-10-15 00:00:00 +0300: 38.9265 mL/min·kg [Google Health]
   2026-10-15 14:42:31 +0300: 39.16 mL/min·kg [SSW0]
   2026-10-16 00:00:00 +0300: 38.9581 mL/min·kg [Google Health]
+  2026-10-16 14:48:34 +0300: 39.33 mL/min·kg [SSW0]
+  2026-10-16 19:29:29 +0300: 39.31 mL/min·kg [SSW0]
+  2026-10-17 00:00:00 +0300: 39.0439 mL/min·kg [Google Health]
+  2026-10-17 11:00:11 +0300: 39.47 mL/min·kg [SSW0]
+  2026-10-17 18:50:27 +0300: 39.4 mL/min·kg [SSW0]
+  2026-10-18 00:00:00 +0300: 39.1288 mL/min·kg [Google Health]
+  2026-10-18 17:08:22 +0300: 39.49 mL/min·kg [SSW0]
+  2026-10-19 00:00:00 +0300: 39.17 mL/min·kg [Google Health]
+  2026-10-19 15:58:55 +0300: 39.63 mL/min·kg [SSW0]
+  2026-10-20 11:26:25 +0300: 39.81 mL/min·kg [SSW0]
 
---- HKQuantityTypeIdentifierWalkingHeartRateAverage (total 29) ---
-  2026-09-30 00:00:31 +0300: 103.0 count/min [SSW0]
-  2026-10-01 07:13:47 +0300: 98.0 count/min [SSW0]
-  2026-10-02 00:03:57 +0300: 123.5 count/min [SSW0]
+--- HKQuantityTypeIdentifierWalkingHeartRateAverage (total 32) ---
   2026-10-05 00:03:45 +0300: 78.0 count/min [SSW0]
   2026-10-06 00:02:27 +0300: 89.0 count/min [SSW0]
   2026-10-07 00:02:37 +0300: 125.0 count/min [SSW0]
@@ -116,28 +142,29 @@ HKDataTypeSleepDurationGoal: 1 records | latest: 2026-09-13 16:34:14 +0300 = 8 h
   2026-10-13 00:00:09 +0300: 86.0 count/min [SSW0]
   2026-10-14 00:14:16 +0300: 105.0 count/min [SSW0]
   2026-10-15 00:02:25 +0300: 83.5 count/min [SSW0]
-  2026-10-16 00:00:22 +0300: 76.5 count/min [SSW0]
+  2026-10-16 00:00:22 +0300: 81.0 count/min [SSW0]
+  2026-10-17 00:02:10 +0300: 101.0 count/min [SSW0]
+  2026-10-18 00:01:33 +0300: 95.0 count/min [SSW0]
+  2026-10-19 00:02:00 +0300: 80.0 count/min [SSW0]
 
---- HKQuantityTypeIdentifierHeartRateVariabilitySDNN (total 237) ---
-  2026-10-15 01:40:04 +0300: 45.5633 ms [SSW0]
-  2026-10-15 03:40:02 +0300: 70.5173 ms [SSW0]
-  2026-10-15 05:40:01 +0300: 64.3398 ms [SSW0]
-  2026-10-15 08:01:36 +0300: 56.0199 ms [SSW0]
-  2026-10-15 10:53:19 +0300: 40.9295 ms [SSW0]
-  2026-10-15 12:01:41 +0300: 10.9292 ms [SSW0]
-  2026-10-15 13:42:12 +0300: 33.9935 ms [SSW0]
-  2026-10-15 18:11:09 +0300: 19.7392 ms [SSW0]
-  2026-10-15 20:58:28 +0300: 28.2874 ms [SSW0]
-  2026-10-15 21:40:26 +0300: 24.4247 ms [SSW0]
-  2026-10-15 23:40:02 +0300: 50.4305 ms [SSW0]
-  2026-10-16 01:39:56 +0300: 62.8675 ms [SSW0]
-  2026-10-16 03:39:59 +0300: 72.5019 ms [SSW0]
-  2026-10-16 05:40:02 +0300: 188.11 ms [SSW0]
-  2026-10-16 09:24:02 +0300: 44.2922 ms [SSW0]
+--- HKQuantityTypeIdentifierHeartRateVariabilitySDNN (total 272) ---
+  2026-10-18 12:04:58 +0300: 41.5058 ms [SSW0]
+  2026-10-18 14:38:30 +0300: 41.9421 ms [SSW0]
+  2026-10-18 17:21:12 +0300: 41.8935 ms [SSW0]
+  2026-10-18 19:45:02 +0300: 35.7788 ms [SSW0]
+  2026-10-18 22:23:55 +0300: 76.7605 ms [SSW0]
+  2026-10-18 22:26:30 +0300: 41.7071 ms [SSW0]
+  2026-10-19 00:26:29 +0300: 47.8501 ms [SSW0]
+  2026-10-19 02:26:28 +0300: 101.652 ms [SSW0]
+  2026-10-19 04:26:29 +0300: 129.321 ms [SSW0]
+  2026-10-19 06:26:33 +0300: 123.461 ms [SSW0]
+  2026-10-19 08:26:30 +0300: 122.194 ms [SSW0]
+  2026-10-19 10:56:28 +0300: 43.2615 ms [SSW0]
+  2026-10-19 13:03:07 +0300: 42.9605 ms [SSW0]
+  2026-10-19 14:54:56 +0300: 34.812 ms [SSW0]
+  2026-10-19 18:48:32 +0300: 28.359 ms [SSW0]
 
-=== WORKOUTS (total 20) ===
-  2026-09-02 19:04:27 +0300 | HKWorkoutActivityTypeWalking | dur=7.1202488164107 min | stats={'HKQuantityTypeIdentifierDistanceWalkingRunning': {'sum': '0.573057', 'average': None, 'maximum': None, 'unit': 'km'}, 'HKQuantityTypeIdentifierBasalEnergyBurned': {'sum': '11.8571', 'average': None, 'maximum': None, 'unit': 'kcal'}, 'HKQuantityTypeIdentifierHeartRate': {'sum': None, 'average': '120.193', 'maximum': '136', 'unit': 'count/min'}, 'HKQuantityTypeIdentifierActiveEnergyBurned': {'sum': '42.51', 'average': None, 'maximum': None, 'unit': 'kcal'}} | src=Fitness
-  2026-09-02 20:05:02 +0300 | HKWorkoutActivityTypeWalking | dur=4.235153333346049 min | stats={'HKQuantityTypeIdentifierDistanceWalkingRunning': {'sum': '0.133119', 'average': None, 'maximum': None, 'unit': 'km'}, 'HKQuantityTypeIdentifierBasalEnergyBurned': {'sum': '7.3138', 'average': None, 'maximum': None, 'unit': 'kcal'}, 'HKQuantityTypeIdentifierHeartRate': {'sum': None, 'average': '97.65', 'maximum': '111', 'unit': 'count/min'}, 'HKQuantityTypeIdentifierActiveEnergyBurned': {'sum': '9.45403', 'average': None, 'maximum': None, 'unit': 'kcal'}} | src=Fitness
+=== WORKOUTS (total 22) ===
   2026-09-03 12:30:26 +0300 | HKWorkoutActivityTypeMixedCardio | dur=19.55250416596731 min | stats={'HKQuantityTypeIdentifierActiveEnergyBurned': {'sum': '217.408', 'average': None, 'maximum': None, 'unit': 'kcal'}, 'HKQuantityTypeIdentifierHeartRate': {'sum': None, 'average': '137.033', 'maximum': '161', 'unit': 'count/min'}, 'HKQuantityTypeIdentifierBasalEnergyBurned': {'sum': '24.2134', 'average': None, 'maximum': None, 'unit': 'kcal'}} | src=Fitness
   2026-09-03 14:17:46 +0300 | HKWorkoutActivityTypeWalking | dur=154.7628236969312 min | stats={'HKQuantityTypeIdentifierDistanceWalkingRunning': {'sum': '9.48467', 'average': None, 'maximum': None, 'unit': 'km'}, 'HKQuantityTypeIdentifierBasalEnergyBurned': {'sum': '293.87', 'average': None, 'maximum': None, 'unit': 'kcal'}, 'HKQuantityTypeIdentifierHeartRate': {'sum': None, 'average': '111.173', 'maximum': '137', 'unit': 'count/min'}, 'HKQuantityTypeIdentifierActiveEnergyBurned': {'sum': '641.528', 'average': None, 'maximum': None, 'unit': 'kcal'}} | src=Fitness
   2026-09-04 12:03:17 +0300 | HKWorkoutActivityTypeMixedCardio | dur=20.58374651869138 min | stats={'HKQuantityTypeIdentifierActiveEnergyBurned': {'sum': '235.429', 'average': None, 'maximum': None, 'unit': 'kcal'}, 'HKQuantityTypeIdentifierHeartRate': {'sum': None, 'average': '139.854', 'maximum': '157', 'unit': 'count/min'}, 'HKQuantityTypeIdentifierBasalEnergyBurned': {'sum': '25.5471', 'average': None, 'maximum': None, 'unit': 'kcal'}} | src=Fitness
@@ -156,12 +183,10 @@ HKDataTypeSleepDurationGoal: 1 records | latest: 2026-09-13 16:34:14 +0300 = 8 h
   2026-10-07 09:38:43 +0300 | HKWorkoutActivityTypeRunning | dur=34.66818855007489 min | stats={'HKQuantityTypeIdentifierStepCount': {'sum': '5257', 'average': None, 'maximum': None, 'unit': 'count'}, 'HKQuantityTypeIdentifierRunningGroundContactTime': {'sum': None, 'average': '270.81', 'maximum': '334', 'unit': 'ms'}, 'HKQuantityTypeIdentifierRunningPower': {'sum': None, 'average': '190.246', 'maximum': '318', 'unit': 'W'}, 'HKQuantityTypeIdentifierActiveEnergyBurned': {'sum': '390.901', 'average': None, 'maximum': None, 'unit': 'kcal'}, 'HKQuantityTypeIdentifierBasalEnergyBurned': {'sum': '59.8927', 'average': None, 'maximum': None, 'unit': 'kcal'}, 'HKQuantityTypeIdentifierRunningVerticalOscillation': {'sum': None, 'average': '10.4704', 'maximum': '11.7', 'unit': 'cm'}, 'HKQuantityTypeIdentifierRunningSpeed': {'sum': None, 'average': '8.25283', 'maximum': '13.0882', 'unit': 'km/hr'}, 'HKQuantityTypeIdentifierRunningStrideLength': {'sum': None, 'average': '0.893576', 'maximum': '1.29', 'unit': 'm'}, 'HKQuantityTypeIdentifierDistanceWalkingRunning': {'sum': '4.54547', 'average': None, 'maximum': None, 'unit': 'km'}, 'HKQuantityTypeIdentifierHeartRate': {'sum': None, 'average': '168.937', 'maximum': '181', 'unit': 'count/min'}} | src=SSW0
   2026-10-10 10:40:04 +0300 | HKWorkoutActivityTypeRunning | dur=64.55185101826986 min | stats={'HKQuantityTypeIdentifierStepCount': {'sum': '9904.04', 'average': None, 'maximum': None, 'unit': 'count'}, 'HKQuantityTypeIdentifierRunningGroundContactTime': {'sum': None, 'average': '285.493', 'maximum': '336', 'unit': 'ms'}, 'HKQuantityTypeIdentifierRunningPower': {'sum': None, 'average': '190.023', 'maximum': '247', 'unit': 'W'}, 'HKQuantityTypeIdentifierActiveEnergyBurned': {'sum': '736.923', 'average': None, 'maximum': None, 'unit': 'kcal'}, 'HKQuantityTypeIdentifierBasalEnergyBurned': {'sum': '111.741', 'average': None, 'maximum': None, 'unit': 'kcal'}, 'HKQuantityTypeIdentifierRunningVerticalOscillation': {'sum': None, 'average': '10.2154', 'maximum': '11.2', 'unit': 'cm'}, 'HKQuantityTypeIdentifierRunningSpeed': {'sum': None, 'average': '8.21811', 'maximum': '10.6229', 'unit': 'km/hr'}, 'HKQuantityTypeIdentifierRunningStrideLength': {'sum': None, 'average': '0.866802', 'maximum': '1.2', 'unit': 'm'}, 'HKQuantityTypeIdentifierDistanceWalkingRunning': {'sum': '8.70942', 'average': None, 'maximum': None, 'unit': 'km'}, 'HKQuantityTypeIdentifierHeartRate': {'sum': None, 'average': '165.717', 'maximum': '185', 'unit': 'count/min'}} | src=SSW0
   2026-10-14 09:13:01 +0300 | HKWorkoutActivityTypeRunning | dur=75.33036628365517 min | stats={'HKQuantityTypeIdentifierStepCount': {'sum': '11668', 'average': None, 'maximum': None, 'unit': 'count'}, 'HKQuantityTypeIdentifierRunningGroundContactTime': {'sum': None, 'average': '289.956', 'maximum': '345', 'unit': 'ms'}, 'HKQuantityTypeIdentifierRunningPower': {'sum': None, 'average': '190.527', 'maximum': '448', 'unit': 'W'}, 'HKQuantityTypeIdentifierActiveEnergyBurned': {'sum': '836.53', 'average': None, 'maximum': None, 'unit': 'kcal'}, 'HKQuantityTypeIdentifierBasalEnergyBurned': {'sum': '130.338', 'average': None, 'maximum': None, 'unit': 'kcal'}, 'HKQuantityTypeIdentifierRunningVerticalOscillation': {'sum': None, 'average': '10.2559', 'maximum': '11.7', 'unit': 'cm'}, 'HKQuantityTypeIdentifierRunningSpeed': {'sum': None, 'average': '8.18522', 'maximum': '12.1312', 'unit': 'km/hr'}, 'HKQuantityTypeIdentifierRunningStrideLength': {'sum': None, 'average': '0.865697', 'maximum': '1.16', 'unit': 'm'}, 'HKQuantityTypeIdentifierDistanceWalkingRunning': {'sum': '10.0363', 'average': None, 'maximum': None, 'unit': 'km'}, 'HKQuantityTypeIdentifierHeartRate': {'sum': None, 'average': '152.11', 'maximum': '186', 'unit': 'count/min'}} | src=SSW0
+  2026-10-17 10:00:04 +0300 | HKWorkoutActivityTypeRunning | dur=60.12333168387413 min | stats={'HKQuantityTypeIdentifierStepCount': {'sum': '9557', 'average': None, 'maximum': None, 'unit': 'count'}, 'HKQuantityTypeIdentifierRunningGroundContactTime': {'sum': None, 'average': '279.525', 'maximum': '328', 'unit': 'ms'}, 'HKQuantityTypeIdentifierRunningPower': {'sum': None, 'average': '185.585', 'maximum': '335', 'unit': 'W'}, 'HKQuantityTypeIdentifierActiveEnergyBurned': {'sum': '664.722', 'average': None, 'maximum': None, 'unit': 'kcal'}, 'HKQuantityTypeIdentifierBasalEnergyBurned': {'sum': '103.979', 'average': None, 'maximum': None, 'unit': 'kcal'}, 'HKQuantityTypeIdentifierRunningVerticalOscillation': {'sum': None, 'average': '10.1732', 'maximum': '11.4', 'unit': 'cm'}, 'HKQuantityTypeIdentifierRunningSpeed': {'sum': None, 'average': '8.14231', 'maximum': '12.4095', 'unit': 'km/hr'}, 'HKQuantityTypeIdentifierRunningStrideLength': {'sum': None, 'average': '0.842212', 'maximum': '1.14', 'unit': 'm'}, 'HKQuantityTypeIdentifierDistanceWalkingRunning': {'sum': '7.8798', 'average': None, 'maximum': None, 'unit': 'km'}, 'HKQuantityTypeIdentifierHeartRate': {'sum': None, 'average': '153.796', 'maximum': '171', 'unit': 'count/min'}} | src=SSW0
+  2026-10-20 10:20:18 +0300 | HKWorkoutActivityTypeRunning | dur=66.1172963321209 min | stats={'HKQuantityTypeIdentifierStepCount': {'sum': '10075', 'average': None, 'maximum': None, 'unit': 'count'}, 'HKQuantityTypeIdentifierRunningGroundContactTime': {'sum': None, 'average': '308.128', 'maximum': '346', 'unit': 'ms'}, 'HKQuantityTypeIdentifierRunningPower': {'sum': None, 'average': '169.106', 'maximum': '229', 'unit': 'W'}, 'HKQuantityTypeIdentifierActiveEnergyBurned': {'sum': '623.311', 'average': None, 'maximum': None, 'unit': 'kcal'}, 'HKQuantityTypeIdentifierBasalEnergyBurned': {'sum': '112.876', 'average': None, 'maximum': None, 'unit': 'kcal'}, 'HKQuantityTypeIdentifierRunningVerticalOscillation': {'sum': None, 'average': '9.70184', 'maximum': '11.4', 'unit': 'cm'}, 'HKQuantityTypeIdentifierRunningSpeed': {'sum': None, 'average': '7.38014', 'maximum': '10.4578', 'unit': 'km/hr'}, 'HKQuantityTypeIdentifierRunningStrideLength': {'sum': None, 'average': '0.8145', 'maximum': '0.95', 'unit': 'm'}, 'HKQuantityTypeIdentifierDistanceWalkingRunning': {'sum': '8.02016', 'average': None, 'maximum': None, 'unit': 'km'}, 'HKQuantityTypeIdentifierHeartRate': {'sum': None, 'average': '142.053', 'maximum': '151', 'unit': 'count/min'}} | src=SSW0
 
-=== ACTIVITY SUMMARIES (total 761) ===
-  2026-10-02: active=503.974/750 kcal, exercise=24/30 min, stand=10/12 hr
-  2026-10-03: active=0/750 kcal, exercise=0/30 min, stand=0/12 hr
-  2026-10-04: active=1071.07/750 kcal, exercise=113/30 min, stand=13/12 hr
-  2026-10-05: active=1060.06/1000 kcal, exercise=107/30 min, stand=14/12 hr
+=== ACTIVITY SUMMARIES (total 765) ===
   2026-10-06: active=1045.91/1000 kcal, exercise=98/30 min, stand=15/12 hr
   2026-10-07: active=1332.08/1000 kcal, exercise=98/30 min, stand=16/12 hr
   2026-10-08: active=1328.92/1000 kcal, exercise=127/30 min, stand=15/12 hr
@@ -172,4 +197,8 @@ HKDataTypeSleepDurationGoal: 1 records | latest: 2026-09-13 16:34:14 +0300 = 8 h
   2026-10-13: active=1296.09/1000 kcal, exercise=132/30 min, stand=14/12 hr
   2026-10-14: active=2216.12/1000 kcal, exercise=215/30 min, stand=18/12 hr
   2026-10-15: active=1415.06/1000 kcal, exercise=129/30 min, stand=16/12 hr
-  2026-10-16: active=161.322/1000 kcal, exercise=4/30 min, stand=3/12 hr
+  2026-10-16: active=1260.44/1000 kcal, exercise=130/30 min, stand=15/12 hr
+  2026-10-17: active=1938.23/1000 kcal, exercise=199/30 min, stand=15/12 hr
+  2026-10-18: active=1040.66/1000 kcal, exercise=139/30 min, stand=10/10 hr
+  2026-10-19: active=1324.38/1200 kcal, exercise=121/30 min, stand=13/12 hr
+  2026-10-20: active=968.902/1200 kcal, exercise=104/30 min, stand=5/12 hr

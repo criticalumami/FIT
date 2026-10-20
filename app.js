@@ -287,7 +287,8 @@
       { id: 'w1', date: '2026-09-03', kg: 88.0, kcal: null },
       { id: 'w2', date: '2026-09-17', kg: 85.0, kcal: null },
       { id: 'w3', date: '2026-09-24', kg: 81.0, kcal: null },
-      { id: 'w4', date: '2026-10-16', kg: 80.0, kcal: 2400 }
+      { id: 'w4', date: '2026-10-16', kg: 80.0, kcal: null },
+      { id: 'w5', date: '2026-10-19', kg: 79.0, kcal: null }
     ],
     runLog: [
       { id: 'r1', date: '2026-10-01', type: 'Easy Run (Z2 + Strides)', km: 5.54, min: 34.8, hr: 158, notes: 'Apple Health' },
@@ -298,7 +299,9 @@
       { id: 'r6', date: '2026-10-12', type: 'Easy Run (Z2 + Strides)', km: 6.13, min: 38.4, hr: 153, notes: 'Apple Health' },
       { id: 'r7', date: '2026-10-14', type: 'Tempo / Threshold Run', km: 8.39, min: 52.8, hr: 160, notes: 'Apple Health' },
       { id: 'r8', date: '2026-10-16', type: 'Easy Run (Z2 + Strides)', km: 6.80, min: 43.3, hr: 156, notes: 'Apple Health' },
-      { id: 'r9', date: '2026-10-19', type: 'Recovery Jog', km: 2.66, min: 17.5, hr: 147, notes: 'Warm-up run before RR #1' }
+      { id: 'r8b', date: '2026-10-17', type: 'Easy Run (Zone 2)', km: 7.88, min: 60.1, hr: 154, notes: 'Apple Health' },
+      { id: 'r9', date: '2026-10-19', type: 'Recovery Jog', km: 2.66, min: 17.5, hr: 147, notes: 'Warm-up run before RR #1' },
+      { id: 'r10', date: '2026-10-20', type: 'Easy Run (Zone 2 - No Strides)', km: 8.02, min: 66.1, hr: 142, notes: 'Pure Zone 2 aerobic run (max HR 151 bpm), skipped strides' }
     ],
     schedule: [
       { day: 'MON', type: 'RR Full Body #1', rx: 'Pairs 1-3 (3x5-8 / 3x8-12) + Core Triplet (2 sets)', dur: '55m | 90s rest' },
