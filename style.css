@@ -4,32 +4,111 @@
  */
 
 :root {
-  --bg: #0c0c0c;
-  --bg-alt: #141414;
-  --bg-hover: #1e1e1e;
-  --fg: #e5e5e5;
-  --fg-muted: #8a8a8a;
-  --fg-dim: #555555;
-  --border: #2e2e2e;
-  --border-strong: #777777;
-  --accent-bg: #e5e5e5;
-  --accent-fg: #0c0c0c;
-  --focus-ring: #ffffff;
-  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
-}
+  color-scheme: light dark;
 
-[data-theme="light"] {
-  --bg: #f6f6f6;
-  --bg-alt: #ffffff;
-  --bg-hover: #eaeaea;
-  --fg: #111111;
-  --fg-muted: #555555;
-  --fg-dim: #888888;
-  --border: #cccccc;
-  --border-strong: #444444;
-  --accent-bg: #111111;
-  --accent-fg: #f6f6f6;
-  --focus-ring: #000000;
+  &:has(> head > meta[name="color-scheme"][content="dark"]) {
+    color-scheme: dark;
+  }
+  &:has(> head > meta[name="color-scheme"][content="light"]) {
+    color-scheme: light;
+  }
+
+  /* Light & dark raw monochrome palette tokens */
+  --bg-light: #f6f6f6;
+  --bg-dark: #0c0c0c;
+  --bg-alt-light: #ffffff;
+  --bg-alt-dark: #141414;
+  --bg-hover-light: #eaeaea;
+  --bg-hover-dark: #1e1e1e;
+  --fg-light: #111111;
+  --fg-dark: #e5e5e5;
+  --fg-muted-light: #555555;
+  --fg-muted-dark: #8a8a8a;
+  --fg-dim-light: #888888;
+  --fg-dim-dark: #555555;
+  --border-light: #cccccc;
+  --border-dark: #2e2e2e;
+  --border-strong-light: #444444;
+  --border-strong-dark: #777777;
+  --accent-bg-light: #111111;
+  --accent-bg-dark: #e5e5e5;
+  --accent-fg-light: #f6f6f6;
+  --accent-fg-dark: #0c0c0c;
+  --focus-ring-light: #000000;
+  --focus-ring-dark: #ffffff;
+
+  /* Default fallback tokens (light) */
+  --bg: var(--bg-light);
+  --bg-alt: var(--bg-alt-light);
+  --bg-hover: var(--bg-hover-light);
+  --fg: var(--fg-light);
+  --fg-muted: var(--fg-muted-light);
+  --fg-dim: var(--fg-dim-light);
+  --border: var(--border-light);
+  --border-strong: var(--border-strong-light);
+  --accent-bg: var(--accent-bg-light);
+  --accent-fg: var(--accent-fg-light);
+  --focus-ring: var(--focus-ring-light);
+
+  /* Fallback for browsers without light-dark() support */
+  @media (prefers-color-scheme: dark) {
+    --bg: var(--bg-dark);
+    --bg-alt: var(--bg-alt-dark);
+    --bg-hover: var(--bg-hover-dark);
+    --fg: var(--fg-dark);
+    --fg-muted: var(--fg-muted-dark);
+    --fg-dim: var(--fg-dim-dark);
+    --border: var(--border-dark);
+    --border-strong: var(--border-strong-dark);
+    --accent-bg: var(--accent-bg-dark);
+    --accent-fg: var(--accent-fg-dark);
+    --focus-ring: var(--focus-ring-dark);
+  }
+
+  &:has(> head > meta[name="color-scheme"][content="dark"]) {
+    --bg: var(--bg-dark);
+    --bg-alt: var(--bg-alt-dark);
+    --bg-hover: var(--bg-hover-dark);
+    --fg: var(--fg-dark);
+    --fg-muted: var(--fg-muted-dark);
+    --fg-dim: var(--fg-dim-dark);
+    --border: var(--border-dark);
+    --border-strong: var(--border-strong-dark);
+    --accent-bg: var(--accent-bg-dark);
+    --accent-fg: var(--accent-fg-dark);
+    --focus-ring: var(--focus-ring-dark);
+  }
+
+  &:has(> head > meta[name="color-scheme"][content="light"]) {
+    --bg: var(--bg-light);
+    --bg-alt: var(--bg-alt-light);
+    --bg-hover: var(--bg-hover-light);
+    --fg: var(--fg-light);
+    --fg-muted: var(--fg-muted-light);
+    --fg-dim: var(--fg-dim-light);
+    --border: var(--border-light);
+    --border-strong: var(--border-strong-light);
+    --accent-bg: var(--accent-bg-light);
+    --accent-fg: var(--accent-fg-light);
+    --focus-ring: var(--focus-ring-light);
+  }
+
+  /* Automatic adaptation via light-dark() */
+  @supports (color: light-dark(white, black)) {
+    --bg: light-dark(var(--bg-light), var(--bg-dark));
+    --bg-alt: light-dark(var(--bg-alt-light), var(--bg-alt-dark));
+    --bg-hover: light-dark(var(--bg-hover-light), var(--bg-hover-dark));
+    --fg: light-dark(var(--fg-light), var(--fg-dark));
+    --fg-muted: light-dark(var(--fg-muted-light), var(--fg-muted-dark));
+    --fg-dim: light-dark(var(--fg-dim-light), var(--fg-dim-dark));
+    --border: light-dark(var(--border-light), var(--border-dark));
+    --border-strong: light-dark(var(--border-strong-light), var(--border-strong-dark));
+    --accent-bg: light-dark(var(--accent-bg-light), var(--accent-bg-dark));
+    --accent-fg: light-dark(var(--accent-fg-light), var(--accent-fg-dark));
+    --focus-ring: light-dark(var(--focus-ring-light), var(--focus-ring-dark));
+  }
+
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
 }
 
 * {

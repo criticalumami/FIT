@@ -1,8 +1,14 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="light dark">
+  <script>
+    try {
+      document.querySelector('meta[name="color-scheme"]').content = localStorage.getItem("color-scheme") ?? "light dark";
+    } catch (e) {}
+  </script>
   <title>FIT // suckless training &amp; recomposition</title>
   <link rel="stylesheet" href="style.css">
 </head>
@@ -35,7 +41,7 @@
       </div>
       <div class="status-seg">
         <span id="toast-status" role="status" aria-live="polite"></span>
-        <button type="button" class="btn-inline" id="theme-toggle" title="Toggle Dark/Light Monochrome (Shortcut: t)">inv</button>
+        <button type="button" class="btn-inline" id="theme-toggle" title="Toggle Color Scheme / Follow System (Shortcut: t)">inv:auto</button>
       </div>
     </div>
   </header>

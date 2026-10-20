@@ -801,21 +801,21 @@
       const hy = yForHr(r.hr);
       const isZ2 = r.hr && r.hr <= 148;
       return `
-        <rect x="${(cx - 10).toFixed(1)}" y="${by.toFixed(1)}" width="20" height="${bh.toFixed(1)}" fill="${isZ2 ? '#444' : '#252525'}" stroke="#555" stroke-width="1" />
-        <text x="${cx.toFixed(1)}" y="${(by + 11).toFixed(1)}" text-anchor="middle" font-size="8.5" fill="#aaa">${Number(r.km).toFixed(1)}k</text>
+        <rect x="${(cx - 10).toFixed(1)}" y="${by.toFixed(1)}" width="20" height="${bh.toFixed(1)}" fill="var(--bg-hover)" stroke="var(--border-strong)" stroke-width="1" />
+        <text x="${cx.toFixed(1)}" y="${(by + 11).toFixed(1)}" text-anchor="middle" font-size="8.5" fill="var(--fg-muted)">${Number(r.km).toFixed(1)}k</text>
         <circle cx="${cx.toFixed(1)}" cy="${hy.toFixed(1)}" r="${isZ2 ? 4.5 : 3.5}" fill="currentColor" />
         <text x="${cx.toFixed(1)}" y="${(hy - 7).toFixed(1)}" text-anchor="middle" font-size="9.5" font-weight="${isZ2 ? '700' : '400'}" fill="currentColor">${r.hr || ''}</text>
-        <text x="${cx.toFixed(1)}" y="${H - 7}" text-anchor="middle" font-size="9" fill="#888">${r.date.slice(5)}</text>
+        <text x="${cx.toFixed(1)}" y="${H - 7}" text-anchor="middle" font-size="9" fill="var(--fg-muted)">${r.date.slice(5)}</text>
       `;
     }).join('');
 
     wrap.innerHTML = `
       <svg viewBox="0 0 ${W} ${H}" width="100%" height="160" role="img" aria-label="Running distance and heart rate trend chart">
-        <line x1="${padL}" y1="${yForHr(165)}" x2="${W - padR}" y2="${yForHr(165)}" stroke="#333" stroke-dasharray="2,2"/>
-        <text x="4" y="${yForHr(165) + 3}" font-size="8.5" fill="#888">165 bpm</text>
-        <line x1="${padL}" y1="${z2Y.toFixed(1)}" x2="${W - padR}" y2="${z2Y.toFixed(1)}" stroke="#888" stroke-dasharray="4,3"/>
+        <line x1="${padL}" y1="${yForHr(165)}" x2="${W - padR}" y2="${yForHr(165)}" stroke="var(--border)" stroke-dasharray="2,2"/>
+        <text x="4" y="${yForHr(165) + 3}" font-size="8.5" fill="var(--fg-muted)">165 bpm</text>
+        <line x1="${padL}" y1="${z2Y.toFixed(1)}" x2="${W - padR}" y2="${z2Y.toFixed(1)}" stroke="var(--border-strong)" stroke-dasharray="4,3"/>
         <text x="4" y="${(z2Y + 3).toFixed(1)}" font-size="8.5" fill="currentColor">148 Z2</text>
-        <text x="${W - padR + 4}" y="${padT + 8}" font-size="8.5" fill="#888">Bars: km</text>
+        <text x="${W - padR + 4}" y="${padT + 8}" font-size="8.5" fill="var(--fg-muted)">Bars: km</text>
         <text x="${W - padR + 4}" y="${padT + 20}" font-size="8.5" fill="currentColor">Line: HR</text>
         ${barsAndDots}
         <polyline fill="none" stroke="currentColor" stroke-width="1.8" points="${hrPts}" />
@@ -847,17 +847,17 @@
       return `
         <circle cx="${cx}" cy="${cy}" r="3.5" fill="currentColor" />
         <text x="${cx}" y="${cy - 7}" text-anchor="middle" font-size="10" fill="currentColor">${d.kg.toFixed(1)}</text>
-        <text x="${cx}" y="${H - 6}" text-anchor="middle" font-size="9" fill="#888">${d.date.slice(5)}</text>
+        <text x="${cx}" y="${H - 6}" text-anchor="middle" font-size="9" fill="var(--fg-muted)">${d.date.slice(5)}</text>
       `;
     }).join('');
 
     wrap.innerHTML = `
       <svg viewBox="0 0 ${W} ${H}" width="100%" height="155" role="img" aria-label="Weight progress chart">
-        <line x1="${padL}" y1="${yFor(88)}" x2="${W - padR}" y2="${yFor(88)}" stroke="#333" stroke-dasharray="2,2"/>
-        <text x="4" y="${yFor(88) + 3}" font-size="9" fill="#888">88kg</text>
-        <line x1="${padL}" y1="${yFor(80)}" x2="${W - padR}" y2="${yFor(80)}" stroke="#333" stroke-dasharray="2,2"/>
-        <text x="4" y="${yFor(80) + 3}" font-size="9" fill="#888">80kg</text>
-        <line x1="${padL}" y1="${targetY}" x2="${W - padR}" y2="${targetY}" stroke="#888" stroke-dasharray="4,3"/>
+        <line x1="${padL}" y1="${yFor(88)}" x2="${W - padR}" y2="${yFor(88)}" stroke="var(--border)" stroke-dasharray="2,2"/>
+        <text x="4" y="${yFor(88) + 3}" font-size="9" fill="var(--fg-muted)">88kg</text>
+        <line x1="${padL}" y1="${yFor(80)}" x2="${W - padR}" y2="${yFor(80)}" stroke="var(--border)" stroke-dasharray="2,2"/>
+        <text x="4" y="${yFor(80) + 3}" font-size="9" fill="var(--fg-muted)">80kg</text>
+        <line x1="${padL}" y1="${targetY}" x2="${W - padR}" y2="${targetY}" stroke="var(--border-strong)" stroke-dasharray="4,3"/>
         <text x="4" y="${targetY + 3}" font-size="9" fill="currentColor">73.5</text>
         <polyline fill="none" stroke="currentColor" stroke-width="2" points="${pts}" />
         ${circles}
@@ -993,6 +993,70 @@
   }
 
   // ==========================================
+  // COLOR SCHEME (Follow System + Override)
+  // ==========================================
+  const COLOR_SCHEME_KEY = 'color-scheme';
+  const darkMql = window.matchMedia('(prefers-color-scheme: dark)');
+
+  function getSystemScheme() {
+    return darkMql.matches ? 'dark' : 'light';
+  }
+
+  function applyColorSchemeMeta() {
+    const meta = document.querySelector('meta[name="color-scheme"]');
+    let stored = null;
+    try {
+      stored = localStorage.getItem(COLOR_SCHEME_KEY);
+    } catch (e) {}
+    const validOverride = (stored === 'light' || stored === 'dark') ? stored : null;
+    if (meta) {
+      meta.content = validOverride || 'light dark';
+    }
+    const btn = document.getElementById('theme-toggle');
+    if (btn) {
+      btn.textContent = validOverride ? `inv:${validOverride}` : 'inv:auto';
+      btn.title = validOverride
+        ? `Theme pinned to ${validOverride} (click to revert to system auto, shortcut: t)`
+        : `Following system (${getSystemScheme()}) — click to override (shortcut: t)`;
+    }
+  }
+
+  function toggleColorScheme() {
+    let stored = null;
+    try {
+      stored = localStorage.getItem(COLOR_SCHEME_KEY);
+    } catch (e) {}
+    const sys = getSystemScheme();
+    const rendered = (stored === 'light' || stored === 'dark') ? stored : sys;
+    const target = rendered === 'dark' ? 'light' : 'dark';
+
+    try {
+      if (target !== sys) {
+        localStorage.setItem(COLOR_SCHEME_KEY, target);
+        showToast(`THEME OVERRIDE: ${target.toUpperCase()}`);
+      } else {
+        localStorage.removeItem(COLOR_SCHEME_KEY);
+        showToast('THEME: FOLLOW SYSTEM (AUTO)');
+      }
+    } catch (e) {}
+
+    const meta = document.querySelector('meta[name="color-scheme"]');
+    if (meta) {
+      meta.content = target !== sys ? target : 'light dark';
+    }
+    applyColorSchemeMeta();
+  }
+
+  window.addEventListener('storage', e => {
+    if (e.key === COLOR_SCHEME_KEY) {
+      applyColorSchemeMeta();
+    }
+  });
+  darkMql.addEventListener('change', () => {
+    applyColorSchemeMeta();
+  });
+
+  // ==========================================
   // EVENT LISTENERS & NAVIGATION
   // ==========================================
   function switchTab(tabName) {
@@ -1032,9 +1096,7 @@
     }
 
     if (e.target.id === 'theme-toggle') {
-      const root = document.documentElement;
-      const next = root.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
-      root.setAttribute('data-theme', next);
+      toggleColorScheme();
       return;
     }
 
@@ -1407,6 +1469,7 @@
   document.getElementById('rr-date').value = todayIso;
   document.getElementById('wt-date').value = todayIso;
   document.getElementById('run-date').value = todayIso;
+  applyColorSchemeMeta();
   prefillNextTargetIntoForm();
   renderAll();
 })();
