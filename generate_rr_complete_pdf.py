@@ -1,20 +1,20 @@
 #!/usr/bin/env python3
 """
 Generate the complete, Darebee-inspired Recommended Routine (RR) Form & Instruction PDF
-(`RR_Complete_Form_Guide.pdf` and `RR_Form_Guide.pdf`).
+(generated/RR_Complete_Form_Guide.pdf). `--html-only` skips the PDF step (used by CI).
 Features custom anatomical multi-frame Darebee-style vector illustrations (Start & End pose
 in each panel), muscle-engagement highlights, directional motion arrows, and complete
 instructions for every RR exercise and alternate pathway.
 """
 import math
 import os
-import shutil
 import subprocess
+import sys
 
 DIR = os.path.dirname(os.path.abspath(__file__))
-HTML_PATH = os.path.join(DIR, "rr_complete_form_guide.html")
-PDF_PATH = os.path.join(DIR, "RR_Complete_Form_Guide.pdf")
-PDF_ALIAS_PATH = os.path.join(DIR, "RR_Form_Guide.pdf")
+OUT_DIR = os.path.join(DIR, "generated")
+HTML_PATH = os.path.join(OUT_DIR, "rr_complete_form_guide.html")
+PDF_PATH = os.path.join(OUT_DIR, "RR_Complete_Form_Guide.pdf")
 
 
 def capsule(x1, y1, x2, y2, r1, r2, fill="#cbd5e1", stroke="#0f172a", sw=1.2):
@@ -2738,9 +2738,12 @@ HTML_TEMPLATE = f"""<!DOCTYPE html>
 
 
 def main():
+    os.makedirs(OUT_DIR, exist_ok=True)
     with open(HTML_PATH, "w", encoding="utf-8") as f:
         f.write(HTML_TEMPLATE)
     print(f"Wrote {HTML_PATH}")
+    if "--html-only" in sys.argv:
+        return
 
     chrome_bin = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
     cmd = [
@@ -2752,8 +2755,7 @@ def main():
         f"file://{HTML_PATH}",
     ]
     subprocess.run(cmd, check=True)
-    shutil.copyfile(PDF_PATH, PDF_ALIAS_PATH)
-    print(f"Generated {PDF_PATH} and {PDF_ALIAS_PATH} ({os.path.getsize(PDF_PATH)} bytes)")
+    print(f"Generated {PDF_PATH} ({os.path.getsize(PDF_PATH)} bytes)")
 
 
 if __name__ == "__main__":

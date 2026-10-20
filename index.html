@@ -36,8 +36,8 @@
       </div>
       <div class="status-seg">
         <span>BW:</span>
-        <strong id="bar-bw">80.0kg</strong>
-        <span class="muted">-&gt; 73.5kg</span>
+        <strong id="bar-bw">-</strong>
+        <span class="muted" id="bar-target"></span>
       </div>
       <div class="status-seg">
         <span id="toast-status" role="status" aria-live="polite"></span>
@@ -57,13 +57,13 @@
         <!-- Recomposition Progress -->
         <div class="tile tile-focus col-6">
           <div class="tile-header">
-            <span>Recomposition Trajectory (88.0kg -&gt; 73.5kg)</span>
+            <span id="trajectory-title">Recomposition Trajectory</span>
             <span class="meta">100% Bodyweight Only</span>
           </div>
           <div class="tile-body">
             <pre class="mono-pre" id="ascii-progress"></pre>
             <div style="margin-top:8px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px;">
-              <span class="muted" id="weight-rate-summary">Rate: -1.86 kg/wk (Sep-Oct) | Target deficit: -800 to -1000 kcal/d</span>
+              <span class="muted" id="weight-rate-summary"></span>
               <button type="button" class="btn-inline" data-goto-tab="metrics">+ Log Weight</button>
             </div>
           </div>
@@ -189,7 +189,7 @@
                   </div>
                   <div class="field">
                     <label for="rr-bw">Bodyweight (kg):</label>
-                    <input type="number" id="rr-bw" name="bw" step="0.1" inputmode="decimal" placeholder="80.0">
+                    <input type="number" id="rr-bw" name="bw" step="0.1" inputmode="decimal" placeholder="kg">
                   </div>
                   <div class="field">
                     <label for="rr-notes">Session Notes / RPE:</label>
@@ -400,6 +400,7 @@ Pair 3: Row Progression (3x8-12)     + Push-Up Progression (3x5-8)
         <button type="button" class="btn-inline" data-form-filter="pair3">Pair 3: Row + Push</button>
         <button type="button" class="btn-inline" data-form-filter="core">Core Triplet</button>
         <button type="button" class="btn-inline" data-form-filter="skill">Warm-Up &amp; Sunday Skills</button>
+        <a class="btn-inline" href="form-guide.html" target="_blank" rel="noopener">Illustrated form guide -&gt;</a>
       </div>
 
       <div class="tile-grid" id="form-guides-container"></div>
@@ -414,10 +415,12 @@ Pair 3: Row Progression (3x8-12)     + Push-Up Progression (3x5-8)
         <div class="tile tile-focus col-5">
           <div class="tile-header">
             <span>Bodyweight Log &amp; Trend Chart</span>
-            <span class="meta">Goal: 73.0 - 74.0 kg</span>
+            <span class="meta" id="weight-goal-meta"></span>
           </div>
           <div class="tile-body">
             <div id="weight-svg-wrap" style="margin-bottom:10px; border:1px solid var(--border); background:var(--bg); padding:6px;"></div>
+            <p class="muted" id="weight-trend-meta" style="margin-bottom:10px;"></p>
+            <p class="hint" style="margin-bottom:10px;">Weigh in daily (morning, after the bathroom, before food). Judge progress by the 7-day average, not single readings.</p>
 
             <form id="weight-form" action="#metrics" method="POST" style="margin-bottom:10px;">
               <fieldset>
@@ -429,7 +432,7 @@ Pair 3: Row Progression (3x8-12)     + Push-Up Progression (3x5-8)
                   </div>
                   <div class="field">
                     <label for="wt-val">Weight (kg):</label>
-                    <input type="number" id="wt-val" name="kg" step="0.1" inputmode="decimal" required placeholder="79.0">
+                    <input type="number" id="wt-val" name="kg" step="0.1" inputmode="decimal" required placeholder="kg">
                   </div>
                 </div>
                 <div class="btn-row" style="margin-top:8px;">
@@ -444,6 +447,7 @@ Pair 3: Row Progression (3x8-12)     + Push-Up Progression (3x5-8)
                   <tr>
                     <th>Date</th>
                     <th>Weight (kg)</th>
+                    <th>7-Day Avg</th>
                     <th>Delta</th>
                     <th>Action</th>
                   </tr>
@@ -523,6 +527,21 @@ Pair 3: Row Progression (3x8-12)     + Push-Up Progression (3x5-8)
                 <tbody></tbody>
               </table>
             </div>
+
+            <h4 style="margin-top:12px;">Weekly Running Volume (Mon-Sun)</h4>
+            <p class="hint">Flags weeks that grow more than 10% over the previous week.</p>
+            <div class="table-wrap">
+              <table id="weekly-km-table">
+                <thead>
+                  <tr>
+                    <th>Week Of</th>
+                    <th>Distance</th>
+                    <th>Change</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
           </div>
         </div>
       </div>
@@ -539,7 +558,7 @@ Pair 3: Row Progression (3x8-12)     + Push-Up Progression (3x5-8)
             <span class="meta">Zero Lock-In</span>
           </div>
           <div class="tile-body">
-            <p>All changes are saved automatically in browser <code>localStorage</code>. Export anytime to Markdown (Obsidian compatible), CSV (<code>rr_log.csv</code>), or full JSON state.</p>
+            <p>All changes are saved automatically in browser <code>localStorage</code> (this browser only: export JSON regularly as a backup). Export anytime to Markdown (Obsidian compatible), CSV (<code>rr_log.csv</code>), or full JSON state.</p>
             <div class="btn-row" style="margin-bottom:10px;">
               <button type="button" class="btn" id="btn-export-md">Download WORKOUT_LOG.md</button>
               <button type="button" class="btn-secondary" id="btn-export-csv">Download rr_log.csv</button>
@@ -559,7 +578,7 @@ Pair 3: Row Progression (3x8-12)     + Push-Up Progression (3x5-8)
                 </div>
                 <div class="btn-row">
                   <button type="submit">Import State</button>
-                  <button type="button" class="btn-secondary" id="btn-factory-reset">Reset to Baseline Defaults</button>
+                  <button type="button" class="btn-secondary" id="btn-factory-reset">Clear All Data</button>
                 </div>
               </fieldset>
             </form>
@@ -569,17 +588,18 @@ Pair 3: Row Progression (3x8-12)     + Push-Up Progression (3x5-8)
         <div class="tile col-6">
           <div class="tile-header">
             <span>Direct GitHub Repository Sync (Optional)</span>
-            <span class="meta">criticalumami/FIT</span>
+            <span class="meta">private repos only</span>
           </div>
           <div class="tile-body">
-            <p>Push your logged sessions directly from any browser to <code>criticalumami/FIT</code> on GitHub (`data.json` &amp; `WORKOUT_LOG.md`) using a fine-grained Personal Access Token (stored only in your local browser).</p>
+            <p>Push <code>data.json</code> &amp; <code>WORKOUT_LOG.md</code> to a <strong>private</strong> GitHub repo (e.g. <code>you/FIT-data</code>). Sync refuses public repos, because this data is personal. Do not use the app's own public repo.</p>
+            <p class="hint">Use a fine-grained token limited to that one repo, "Contents: Read and write" only, with an expiry date. The token is kept for this browser tab only.</p>
             <form id="gh-sync-form" action="#sync" method="POST">
               <fieldset>
                 <legend>GitHub API Credentials</legend>
                 <div class="form-grid">
                   <div class="field">
                     <label for="gh-repo">Repository (owner/repo):</label>
-                    <input type="text" id="gh-repo" name="repo" value="criticalumami/FIT" autocorrect="off" autocapitalize="off" spellcheck="false" required>
+                    <input type="text" id="gh-repo" name="repo" value="" placeholder="owner/FIT-data" autocorrect="off" autocapitalize="off" spellcheck="false" required>
                   </div>
                   <div class="field">
                     <label for="gh-branch">Branch:</label>
@@ -609,6 +629,8 @@ Pair 3: Row Progression (3x8-12)     + Push-Up Progression (3x5-8)
     <div>Keys: [1-6] switch view | [t] invert grayscale | [space] start/pause timer</div>
   </footer>
 
+  <script src="lib.js"></script>
+  <script src="program.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

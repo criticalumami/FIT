@@ -215,6 +215,7 @@ body {
 }
 
 .btn-inline {
+  text-decoration: none;
   background: var(--bg);
   color: var(--fg);
   border: 1px solid var(--border-strong);
@@ -434,6 +435,11 @@ legend {
   font-weight: 700;
   color: var(--fg);
   margin-bottom: 3px; /* Smaller than gap between fields per Gestalt proximity rule */
+}
+
+.hint {
+  font-size: 11px;
+  color: var(--fg-muted);
 }
 
 .field .hint {

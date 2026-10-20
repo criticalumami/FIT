@@ -1,4 +1,11 @@
 .DS_Store
 __pycache__/
-Export.zip
+_site/
+
+# Personal data: never commit (this repo and its GitHub Pages site are public).
+data.json
+data.json.tmp
 health_export/
+Export.zip
+generated/
+archive/

@@ -1,6 +1,9 @@
 /*
  * FIT // suckless grayscale training & recomposition system
- * Vanilla JS, zero dependencies, localStorage + GitHub REST sync
+ * Vanilla JS, zero dependencies, localStorage + optional private-repo GitHub sync.
+ *
+ * No personal data lives in this file: it is published. Your data lives in
+ * localStorage and in the local, git-ignored data.json (see README).
  */
 
 (function () {
@@ -8,331 +11,70 @@
 
   const STORAGE_KEY = 'fit_suckless_state_v3';
   const GH_TOKEN_KEY = 'fit_suckless_gh_token';
+  const GH_REPO_KEY = 'fit_suckless_gh_repo';
 
-  // Complete 100% Bodyweight-Only Exercise Ladders & Form Guides
-  const EXERCISE_DB = [
-    {
-      id: 'pull',
-      slot: 'Pair 1A: Pull',
-      category: 'pair1',
-      targetRange: '3 x 5-8',
-      ladders: [
-        'L1: Scapular Pulls / Dead Hangs',
-        'L2: Arch Hangs',
-        'L3: Pull-Up Negatives (5-10s eccentric)',
-        'L4: Chin-Ups / Pull-Ups',
-        'L5: L-Sit Pull-Ups',
-        'L6: Archer / Typewriter Pull-Ups'
-      ],
-      cues: [
-        'Start from a full dead hang with arms straight.',
-        'Depress scapulae (pull shoulders down away from ears) before bending elbows.',
-        'Drive elbows down and back toward your ribs until chin clears the bar.',
-        'Lower under strict control (1-2s eccentric) all the way to dead hang.'
-      ],
-      faults: 'Kipping knees, crane-necking chin over bar with rounded shoulders, cutting bottom 20% of dead hang.',
-      defaultNote: 'Current: 4,4,4 strict pull-ups. Add +1 rep to Set 1 -> 5,4,4 next session.'
-    },
-    {
-      id: 'squat',
-      slot: 'Pair 1B: Squat',
-      category: 'pair1',
-      targetRange: '3 x 5-8 (/leg)',
-      ladders: [
-        'L1: Assisted Squat',
-        'L2: Full Depth Bodyweight Squat',
-        'L3: Single-Leg Sofa Step-Up (No Back-Leg Push)',
-        'L4: Bulgarian Split Squat (Rear Foot on Sofa)',
-        'L5: Beginner Shrimp Squat (Knee + Toes touch)',
-        'L6: Intermediate/Advanced Shrimp or Pistol Squat'
-      ],
-      cues: [
-        'For Single-Leg Sofa Step-Up: place top foot flat on sofa, lean torso slightly forward over working knee.',
-        'Keep rear foot dorsiflexed (toes pulled up) so you cannot bounce off the back calf.',
-        'Take a 3-second lowering phase down to the floor on each rep.',
-        'Once 8,8,8 feels easy, switch to Bulgarian Split Squats or Beginner Shrimp Squats.'
-      ],
-      faults: 'Pushing off the floor with the back foot; knee caving inward (valgus); dropping down uncontrolled.',
-      defaultNote: 'Day 1 hit 8,8,8 (/leg) on Single-Leg Sofa Step-Ups. Ready for strict 3s eccentric or Bulgarian Split Squat.'
-    },
-    {
-      id: 'dip',
-      slot: 'Pair 2A: Dip',
-      category: 'pair2',
-      targetRange: '3 x 5-8',
-      ladders: [
-        'L1: Parallel Bar Support Hold (60s)',
-        'L2: Negative Dips (5-8s eccentric)',
-        'L3: Parallel Bar Dips',
-        'L4: L-Sit Dips / Pause Dips (2s bottom)',
-        'L5: Ring Dips / Korean Dips'
-      ],
-      cues: [
-        'Start in locked-out support with depressed shoulders (long neck).',
-        'Lean torso slightly forward (~15-20 deg) and tuck elbows back (~45 deg maximum flare).',
-        'Descend until upper arms are at least parallel to the floor (shoulder crease below elbow).',
-        'Press up to full lockout and re-depress shoulders at the top.'
-      ],
-      faults: 'Shrugging shoulders into ears; flaring elbows out 90 deg; stopping above parallel.',
-      defaultNote: 'Day 1 hit 5,5,5. Target 6,5,5 next session.'
-    },
-    {
-      id: 'hinge',
-      slot: 'Pair 2B: Hinge',
-      category: 'pair2',
-      targetRange: '3 x 8-12',
-      ladders: [
-        'L1: Romanian Deadlift (Bodyweight / Single-Leg Balance)',
-        'L2: Glute Bridge Hold / Marching Bridge',
-        'L3: Floor Slide Hamstring Curl (Both Legs)',
-        'L4: Eccentric Single-Leg Floor Slide (2-up, 1-down)',
-        'L5: Single-Leg Floor Slide Hamstring Curl',
-        'L6: Nordic Hamstring Curl (Anchored under sofa)'
-      ],
-      cues: [
-        'Lie supine with heels on sliders/towel/socks on smooth floor.',
-        'Tuck pelvis slightly (posterior pelvic tilt) and squeeze glutes before sliding.',
-        'Keep a straight line from knees through hips to shoulders throughout the slide.',
-        'If 3x9-12 bilateral feels manageable, slide out on 1 leg (4s eccentric) and pull back with 2 legs.'
-      ],
-      faults: 'Letting hips sag toward the floor while sliding; overarching lower back instead of using hamstrings.',
-      defaultNote: 'Day 1 hit 9,9,9 on Floor Slide Progression. Target 10,10,10 or 2-up/1-down eccentric next.'
-    },
-    {
-      id: 'row',
-      slot: 'Pair 3A: Row',
-      category: 'pair3',
-      targetRange: '3 x 8-12',
-      ladders: [
-        'L1: Incline Rows (45 deg body angle)',
-        'L2: Horizontal Inverted Rows (Feet on floor)',
-        'L3: Feet-Elevated Inverted Rows (Feet on sofa)',
-        'L4: Wide-Grip / Tuck Front Lever Rows',
-        'L5: Archer Rows / One-Arm Row Progression'
-      ],
-      cues: [
-        'Maintain a rigid plank from ankles to shoulders (squeeze glutes and abs).',
-        'Pull bar/rings to lower chest or upper abs while retracting shoulder blades together.',
-        'Pause 1 second at the top of every rep to eliminate momentum.',
-        'Keep wrists neutral (do not curl wrists at the top).'
-      ],
-      faults: 'Hips sagging or piking up to shorten the lever; head jutting forward to meet the bar.',
-      defaultNote: 'Day 1 hit 7,7,7. Target 8,7,7 -> 8,8,8.'
-    },
-    {
-      id: 'push',
-      slot: 'Pair 3B: Push-Up',
-      category: 'pair3',
-      targetRange: '3 x 5-8',
-      ladders: [
-        'L1: Incline Push-Up (Hands on sofa)',
-        'L2: Full Standard Push-Up (Hollow body)',
-        'L3: Diamond Push-Up',
-        'L4: Decline Diamond / Feet-Elevated Push-Up',
-        'L5: Pseudo Planche Push-Up (PPPU - lean forward)',
-        'L6: Archer Push-Up'
-      ],
-      cues: [
-        'Form a diamond or narrow triangle with index fingers and thumbs under your sternum.',
-        'Tuck pelvis (posterior pelvic tilt) and squeeze quads + glutes.',
-        'Keep elbows tracking back at ~30-45 deg along your ribcage (never flare sideways).',
-        'Touch chest to hands, then press to full lockout with scapular protraction at the top.'
-      ],
-      faults: 'Elbows flaring out into a T-shape; lower back sagging; stopping short of chest-to-hand contact.',
-      defaultNote: 'Day 1 hit 4,4,4 on Diamond Push-Ups. Target 5,4,4 next session.'
-    },
-    {
-      id: 'core_antiext',
-      slot: 'Core 1: Anti-Extension',
-      category: 'core',
-      targetRange: '2 x 30-60s / 8-12',
-      ladders: [
-        'L1: Forearm Plank (Hollow Body / PPT) 30-60s',
-        'L2: Long-Lever Plank (Elbows ahead of eyes)',
-        'L3: Plank Towel/Socks Floor Slide Out',
-        'L4: Standing Ab Walkouts'
-      ],
-      cues: [
-        'Tuck tailbone under hard (posterior pelvic tilt) so lower back is flat, not arched.',
-        'Protract shoulder blades (push floor away) and pull elbows metaphorically toward toes.',
-        'Once 2x30s feels easy, walk elbows 5-10cm forward into a Long-Lever Plank.'
-      ],
-      faults: 'Passive resting on lumbar spine; looking up instead of neutral neck.',
-      defaultNote: 'Current: 2x30s strict hollow plank (2 sets total to save energy during cut).'
-    },
-    {
-      id: 'core_antirot',
-      slot: 'Core 2: Anti-Rotation',
-      category: 'core',
-      targetRange: '2 x 15-45s/side',
-      ladders: [
-        'L1: Side Plank (Feet stacked) 15-45s/side',
-        'L2: Side Plank with Top Leg Abduction',
-        'L3: Copenhagen Plank (Top foot/knee on sofa)'
-      ],
-      cues: [
-        'Place elbow directly beneath shoulder; stack hips and shoulders vertically.',
-        'Drive bottom hip high off the floor and squeeze glutes so body forms a straight line.',
-        'Copenhagen Plank (top leg on sofa) is a top-tier progression for runners (adductor + oblique armor).'
-      ],
-      faults: 'Top shoulder rolling forward; hips flexing backward into a V-shape.',
-      defaultNote: 'Current: 2x15s/side. Build toward 2x30s/side.'
-    },
-    {
-      id: 'core_ext',
-      slot: 'Core 3: Extension',
-      category: 'core',
-      targetRange: '2 x 8-12',
-      ladders: [
-        'L1: Prone Arch Hold (Superman with straight arms/legs)',
-        'L2: Prone Arch Raises (Dynamic 2s hold at top)',
-        'L3: Sofa Reverse Hyperextensions (Hips on edge of sofa)'
-      ],
-      cues: [
-        'For Sofa Reverse Hyper: lie prone on sofa with hip crease right at the edge, gripping sofa frame.',
-        'Raise straight legs using glutes and spinal erectors until body is horizontal.',
-        'Pause 1 second at the top; do not swing wildly above horizontal.'
-      ],
-      faults: 'Bending knees excessively; using momentum to hyperextend lumbar spine.',
-      defaultNote: 'Current: 2x8 Arch / Reverse Hyper.'
-    },
-    {
-      id: 'skill_hs',
-      slot: 'Sunday Skill: Handstand & Crow',
-      category: 'skill',
-      targetRange: '10-15 min quality',
-      ladders: [
-        'L1: Wrist Prep + Pike Hold (Feet on sofa)',
-        'L2: Crow Pose (Frog Stand) on floor (5 x 15-30s)',
-        'L3: Chest-to-Wall Handstand Hold (5 x 20-45s)',
-        'L4: Wall Heel Pulls / Toe Pulls -> Freestanding Balance'
-      ],
-      cues: [
-        'Grip the floor actively with fingertips (cambered hand) to control forward tilt.',
-        'In Chest-to-Wall Handstand: push tall through shoulders (elevate scapulae) and tuck ribs in.',
-        'Always come down with 2-3 reps in the tank; never train balance skills to failure.'
-      ],
-      faults: 'Banana back (rib flare + anterior pelvic tilt); passive shoulders.',
-      defaultNote: 'Sunday Skill & Mobility Day focus.'
-    },
-    {
-      id: 'skill_lsit',
-      slot: 'Sunday Skill: L-Sit & Skin the Cat',
-      category: 'skill',
-      targetRange: '60s total / 3x3-5',
-      ladders: [
-        'L1: Foot-Supported L-Sit on Floor/Books (60s)',
-        'L2: One-Leg Assisted L-Sit (30s/side)',
-        'L3: Tuck L-Sit (60s total in 10-20s sets)',
-        'L4: Full L-Sit + Skin the Cat (German Hang)'
-      ],
-      cues: [
-        'Depress shoulders hard to create clearance between hips and floor.',
-        'Practice Seated Pike Leg Lifts (3x10) to eliminate hip flexor cramping.',
-        'For Skin the Cat: keep grip secure, tuck knees through arms into controlled German Hang stretch.'
-      ],
-      faults: 'Hunching shoulders forward without depressing scapulae.',
-      defaultNote: 'Accumulate 60s total L-sit time on Sundays.'
-    }
-  ];
+  const L = window.FITLib;
+  const esc = L.escapeHtml;
+  const PROGRAM = window.FIT_PROGRAM;
+  const EXERCISE_DB = PROGRAM.exercises;
+  const exById = id => EXERCISE_DB.find(e => e.id === id) || {};
 
-  // Default initial state matching user's exact logs and Apple Health data
+  // Generic empty state. Real values come from localStorage or data.json.
   const DEFAULT_STATE = {
     meta: {
-      startWeight: 88.0,
-      startDate: '2026-09-03',
-      targetWeight: 73.5,
-      tdee: 3390,
-      targetKcal: 2400,
-      avgSteps: 25307
+      startWeight: null,
+      startDate: null,
+      targetWeight: null,
+      tdee: null,
+      targetKcal: null,
+      avgSteps: null,
+      rhr: null,
+      maxLossPctPerWeek: 1.0
     },
-    activeProgressions: {
-      pull: 'L4: Chin-Ups / Pull-Ups',
-      squat: 'L3: Single-Leg Sofa Step-Up (No Back-Leg Push)',
-      dip: 'L3: Parallel Bar Dips',
-      hinge: 'L3: Floor Slide Hamstring Curl (Both Legs)',
-      row: 'L2: Horizontal Inverted Rows (Feet on floor)',
-      push: 'L3: Diamond Push-Up',
-      core_antiext: 'L1: Forearm Plank (Hollow Body / PPT) 30-60s',
-      core_antirot: 'L1: Side Plank (Feet stacked) 15-45s/side',
-      core_ext: 'L3: Sofa Reverse Hyperextensions (Hips on edge of sofa)',
-      skill_hs: 'L2: Crow Pose (Frog Stand) on floor (5 x 15-30s)',
-      skill_lsit: 'L1: Foot-Supported L-Sit on Floor/Books (60s)'
-    },
+    activeProgressions: {},
     customNotes: {},
-    rrSessions: [
-      {
-        id: 'rr-2026-10-19',
-        date: '2026-10-19',
-        bw: 80.0,
-        pull_prog: 'L4: Chin-Ups / Pull-Ups',
-        pull_sets: '4,4,4',
-        squat_prog: 'L3: Single-Leg Sofa Step-Up (No Back-Leg Push)',
-        squat_sets: '8,8,8 (/leg)',
-        dip_prog: 'L3: Parallel Bar Dips',
-        dip_sets: '5,5,5',
-        hinge_prog: 'L3: Floor Slide Hamstring Curl (Both Legs)',
-        hinge_sets: '9,9,9',
-        row_prog: 'L2: Horizontal Inverted Rows (Feet on floor)',
-        row_sets: '7,7,7',
-        push_prog: 'L3: Diamond Push-Up',
-        push_sets: '4,4,4',
-        antiext: 'Plank 2x30s',
-        antirot: 'Side Plank 2x15s/side',
-        ext: 'Arch/RevHyper 2x8',
-        notes: 'RR Day 1 baseline. Core Triplet trimmed to 2 sets.'
-      }
-    ],
-    weightLog: [
-      { id: 'w1', date: '2026-09-03', kg: 88.0, kcal: null },
-      { id: 'w2', date: '2026-09-17', kg: 85.0, kcal: null },
-      { id: 'w3', date: '2026-09-24', kg: 81.0, kcal: null },
-      { id: 'w4', date: '2026-10-16', kg: 80.0, kcal: null },
-      { id: 'w5', date: '2026-10-19', kg: 79.0, kcal: null }
-    ],
-    runLog: [
-      { id: 'r1', date: '2026-09-16', type: 'Tempo / High HR Run', km: 4.00, min: 30.6, hr: 168, maxHr: 190, power: 194, kcal: 335, vo2: 38.2, notes: 'Apple Watch Outdoor Run' },
-      { id: 'r2', date: '2026-09-19', type: 'Aerobic Run', km: 8.02, min: 59.1, hr: 152, maxHr: 180, power: 204, kcal: 658, vo2: 37.9, notes: 'Apple Watch Outdoor Run' },
-      { id: 'r3', date: '2026-09-23', type: 'Aerobic Run', km: 7.62, min: 60.1, hr: 156, maxHr: 183, power: 188, kcal: 655, vo2: 39.2, notes: 'Apple Watch Outdoor Run' },
-      { id: 'r4', date: '2026-09-26', type: 'Steady / Fast Aerobic', km: 8.04, min: 58.0, hr: 157, maxHr: 180, power: 199, kcal: 694, vo2: 40.5, notes: 'Peak VO2 max (40.5)' },
-      { id: 'r5', date: '2026-09-30', type: 'Long Aerobic Run (10K)', km: 10.03, min: 81.3, hr: 156, maxHr: 181, power: 179, kcal: 842, vo2: 40.4, notes: 'First 10K distance logged' },
-      { id: 'r6', date: '2026-10-07', type: 'Tempo / Threshold Run', km: 4.55, min: 34.7, hr: 169, maxHr: 181, power: 190, kcal: 391, vo2: 38.9, notes: 'High HR threshold effort' },
-      { id: 'r7', date: '2026-10-10', type: 'Threshold / Long Run', km: 8.71, min: 64.6, hr: 166, maxHr: 185, power: 190, kcal: 737, vo2: 38.6, notes: 'Apple Watch Outdoor Run' },
-      { id: 'r8', date: '2026-10-14', type: 'Long Aerobic Run (10K)', km: 10.04, min: 75.3, hr: 152, maxHr: 186, power: 191, kcal: 837, vo2: 39.0, notes: 'PR 10K time (75.3 min @ 152 bpm)' },
-      { id: 'r9', date: '2026-10-17', type: 'Easy Aerobic Run', km: 7.88, min: 60.1, hr: 154, maxHr: 171, power: 186, kcal: 665, vo2: 39.5, notes: 'Apple Watch Outdoor Run' },
-      { id: 'r10', date: '2026-10-20', type: 'Easy Run (Zone 2 - No Strides)', km: 8.02, min: 66.1, hr: 142, maxHr: 151, power: 169, kcal: 623, vo2: 39.8, notes: 'Strict Zone 2 (<148 bpm avg, max 151 bpm), skipped strides' }
-    ],
-    schedule: [
-      { day: 'MON', type: 'RR Full Body #1', rx: 'Pairs 1-3 (3x5-8 / 3x8-12) + Core Triplet (2 sets)', dur: '55m | 90s rest' },
-      { day: 'TUE', type: 'Run #1: Easy + Strides', rx: '7-8 km conversational Zone 2 + 4x20s fast strides at end', dur: '45-50m | HR <150' },
-      { day: 'WED', type: 'RR Full Body #2', rx: 'Pairs 1-3 (+1 rep target) + Core Triplet (2 sets)', dur: '55m | 90s rest' },
-      { day: 'THU', type: 'Run #2: Tempo / Threshold', rx: '8-9 km total (2km WU -> 4-5km Tempo -> 2km CD)', dur: '50-55m | HR 155-165' },
-      { day: 'FRI', type: 'RR Full Body #3', rx: 'Pairs 1-3 (+1 rep target) + Core Triplet (2 sets)', dur: '55m | 90s rest' },
-      { day: 'SAT', type: 'Run #3: Long Aerobic Run', rx: '10-12 km steady aerobic endurance pace', dur: '65m | HR 148-155' },
-      { day: 'SUN', type: 'Skill & Mobility Day', rx: 'Handstand (10m) + Crow (5m) + L-Sit (60s) + Skin the Cat + Mobility', dur: '40m | Low CNS' }
-    ],
-    programNotes: [
-      '# RULES & PHASE 2 NOTES',
-      '- Equipment: 100% Bodyweight Only (Pull-up bar, Dip setup, Row setup, Sofa/Floor). Zero barbells or bands.',
-      '- Double Progression: Add +1 rep per session across sets (e.g., 4,4,4 -> 5,4,4 -> 5,5,4 -> ... -> 8,8,8), then advance to the next level in the ladder.',
-      '- Core Triplet Volume: Kept at 2 sets (Plank 2x30s / Side Plank 2x15s / Arch-RevHyper 2x8) to manage systemic fatigue alongside 25k steps/day + 3x running.',
-      '- Phase 2 Note (Future Option): If lower-body fatigue accumulates during the cut to 73.5 kg, Wednesday RR can transition into an Upper-Body + Skill Maintenance day while Mon & Fri remain full 3-pair RR.'
-    ].join('\n')
+    rrSessions: [],
+    weightLog: [],
+    runLog: [],
+    schedule: PROGRAM.defaultSchedule,
+    programNotes: PROGRAM.defaultProgramNotes
   };
+
+  function clone(x) {
+    return JSON.parse(JSON.stringify(x));
+  }
+
+  function withDefaults(parsed) {
+    const base = clone(DEFAULT_STATE);
+    const merged = Object.assign(base, parsed);
+    merged.meta = Object.assign(clone(DEFAULT_STATE.meta), parsed && parsed.meta);
+    return merged;
+  }
 
   let state = loadState();
 
   function loadState() {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        return Object.assign({}, DEFAULT_STATE, parsed);
-      }
+      if (raw) return withDefaults(JSON.parse(raw));
     } catch (e) {
       console.error('Failed to read localStorage:', e);
     }
-    return JSON.parse(JSON.stringify(DEFAULT_STATE));
+    return clone(DEFAULT_STATE);
+  }
+
+  // First run with empty storage: when served locally (python3 -m http.server),
+  // seed from the git-ignored data.json. On GitHub Pages this 404s harmlessly.
+  async function seedFromLocalDataJson() {
+    let hasStored = false;
+    try { hasStored = !!localStorage.getItem(STORAGE_KEY); } catch (e) {}
+    if (hasStored || !/^https?:$/.test(location.protocol)) return;
+    try {
+      const res = await fetch('data.json', { cache: 'no-store' });
+      if (!res.ok) return;
+      state = withDefaults(await res.json());
+      saveState('LOADED LOCAL data.json');
+    } catch (e) {}
   }
 
   function saveState(msg) {
@@ -354,40 +96,47 @@
     showToast._t = setTimeout(() => el.classList.remove('visible'), 3200);
   }
 
-  // Helper: compute next target sets from a comma-separated string like "4,4,4" or "8,8,8 (/leg)"
-  function computeNextSets(setStr, maxRep = 8) {
-    if (!setStr) return '5,5,5';
-    const match = setStr.match(/(\d+)\s*,\s*(\d+)\s*,\s*(\d+)(.*)/);
-    if (!match) return setStr + ' (+1)';
-    let s1 = parseInt(match[1], 10);
-    let s2 = parseInt(match[2], 10);
-    let s3 = parseInt(match[3], 10);
-    const suffix = match[4] || '';
+  const RR_SLOTS = [
+    ['1A: Pull', 'pull'],
+    ['1B: Squat', 'squat'],
+    ['2A: Dip', 'dip'],
+    ['2B: Hinge', 'hinge'],
+    ['3A: Row', 'row'],
+    ['3B: Push', 'push']
+  ];
 
-    if (s1 >= maxRep && s2 >= maxRep && s3 >= maxRep) {
-      return `${s1},${s2},${s3}${suffix} [LEVEL UP ->]`;
-    }
-    if (s1 <= s2 && s1 <= s3) {
-      s1 += 1;
-    } else if (s2 <= s3) {
-      s2 += 1;
-    } else {
-      s3 += 1;
-    }
-    return `${s1},${s2},${s3}${suffix}`;
+  function nextFor(exId, setStr) {
+    const ex = exById(exId);
+    return L.computeNextSets(setStr, ex.minRep || 5, ex.maxRep || 8);
   }
 
-  function sumReps(setStr) {
-    if (!setStr) return 0;
-    const nums = setStr.match(/\d+/g);
-    if (!nums) return 0;
-    return nums.slice(0, 3).reduce((a, b) => a + parseInt(b, 10), 0);
+  // Ladder step one below / above the given step, or null.
+  function adjacentStep(exId, step, dir) {
+    const ladders = exById(exId).ladders || [];
+    const i = ladders.indexOf(step);
+    if (i === -1) return null;
+    return ladders[i + dir] || null;
+  }
+
+  function nextBadge(exId, step, next) {
+    if (next.action === 'level_up') {
+      const up = adjacentStep(exId, step, +1);
+      return `${esc(next.sets)} <span class="muted">[LEVEL UP -> ${esc(up ? shortProg(up) : 'next step')}]</span>`;
+    }
+    if (next.action === 'regress') {
+      const down = adjacentStep(exId, step, -1);
+      return `${esc(next.sets)} <span class="muted">[below ${exById(exId).minRep}: consider ${esc(down ? shortProg(down) : 'an easier step')}]</span>`;
+    }
+    return esc(next.sets);
   }
 
   function getLatestWeight() {
-    if (!state.weightLog || state.weightLog.length === 0) return 80.0;
-    const sorted = [...state.weightLog].sort((a, b) => a.date.localeCompare(b.date));
-    return sorted[sorted.length - 1].kg;
+    const t = L.weightTrend(state.weightLog);
+    return t ? t.latest : null;
+  }
+
+  function fmtKg(kg) {
+    return kg == null || isNaN(kg) ? '-' : Number(kg).toFixed(1) + ' kg';
   }
 
   function getLatestRR() {
@@ -396,45 +145,70 @@
     return sorted[sorted.length - 1];
   }
 
+  function trendLine(t) {
+    if (!t || t.ratePerWeek == null) return 'Rate: need 2+ weigh-ins';
+    const maxPct = state.meta.maxLossPctPerWeek || 1.0;
+    const pct = t.ratePctBw.toFixed(2);
+    const warn = t.tooFast ? ` | ! FASTER THAN ${maxPct}%/wk TARGET` : '';
+    return `Rate since ${t.windowStart}: ${t.ratePerWeek > 0 ? '+' : ''}${t.ratePerWeek.toFixed(2)} kg/wk (${pct}% BW/wk)${warn}`;
+  }
+
   // ==========================================
   // RENDER VIEW 1: STATUS & DASHBOARD
   // ==========================================
   function renderStatus() {
-    const curWeight = getLatestWeight();
-    document.getElementById('bar-bw').textContent = curWeight.toFixed(1) + 'kg';
+    const m = state.meta;
+    const trend = L.weightTrend(state.weightLog, 28, m.maxLossPctPerWeek || 1.0);
+    const curWeight = trend ? trend.latest : null;
+    const sortedWeights = [...state.weightLog].sort((a, b) => a.date.localeCompare(b.date));
+    const startW = m.startWeight != null ? Number(m.startWeight) : (sortedWeights[0] ? Number(sortedWeights[0].kg) : null);
+    const startDate = m.startDate || (sortedWeights[0] ? sortedWeights[0].date : null);
+    const targetW = m.targetWeight != null ? Number(m.targetWeight) : null;
 
-    const startW = state.meta.startWeight || 88.0;
-    const targetW = state.meta.targetWeight || 73.5;
-    const totalToLose = startW - targetW;
-    const lostSoFar = startW - curWeight;
-    const remaining = Math.max(0, curWeight - targetW);
-    const pct = Math.min(100, Math.max(0, (lostSoFar / totalToLose) * 100));
+    document.getElementById('bar-bw').textContent = curWeight != null ? curWeight.toFixed(1) + 'kg' : '-';
+    document.getElementById('bar-target').textContent = targetW != null ? `-> ${targetW.toFixed(1)}kg` : '';
+    document.getElementById('trajectory-title').textContent =
+      `Recomposition Trajectory (${fmtKg(startW)} -> ${fmtKg(targetW)})`;
 
-    // KPI boxes
+    const haveGoal = startW != null && targetW != null && curWeight != null && startW !== targetW;
+    const lostSoFar = haveGoal ? startW - curWeight : 0;
+    const remaining = haveGoal ? Math.max(0, curWeight - targetW) : 0;
+    const pct = haveGoal ? Math.min(100, Math.max(0, (lostSoFar / (startW - targetW)) * 100)) : 0;
+
     const lastRR = getLatestRR();
     const sortedRuns = [...state.runLog].sort((a, b) => a.date.localeCompare(b.date));
     const lastRun = sortedRuns.length ? sortedRuns[sortedRuns.length - 1] : null;
+    const lastVo2Run = L.latestBy(state.runLog, 'vo2');
     const totalRunsKm = state.runLog.reduce((acc, r) => acc + Number(r.km || 0), 0);
+    const weeks = L.weeklyKm(state.runLog);
+    const thisWeek = weeks.length ? weeks[weeks.length - 1] : null;
+    const rhrStr = m.rhr ? ` | RHR ${esc(m.rhr)} bpm` : '';
+
     const kpiHtml = `
       <div class="stat-box">
-        <div class="stat-label">Current Weight</div>
-        <div class="stat-val">${curWeight.toFixed(1)} kg</div>
-        <div class="stat-sub">-${lostSoFar.toFixed(1)} kg since Sep 3 (${remaining.toFixed(1)} kg to goal)</div>
+        <div class="stat-label">Weight (7-day avg)</div>
+        <div class="stat-val">${trend ? trend.avg7.toFixed(1) + ' kg' : '-'}</div>
+        <div class="stat-sub">${trend ? `latest ${trend.latest.toFixed(1)} on ${esc(trend.latestDate)} | ${trend.entries7} weigh-in(s) this week` : 'No weigh-ins'}${haveGoal ? `<br>-${lostSoFar.toFixed(1)} kg since ${esc(startDate)} (${remaining.toFixed(1)} kg to goal)` : ''}</div>
       </div>
       <div class="stat-box">
-        <div class="stat-label">Latest Run (${lastRun ? lastRun.date.slice(5) : '-'})</div>
+        <div class="stat-label">Rate of Loss</div>
+        <div class="stat-val">${trend && trend.ratePctBw != null ? trend.ratePctBw.toFixed(2) + '%/wk' : '-'}</div>
+        <div class="stat-sub">${trend && trend.ratePerWeek != null ? `${trend.ratePerWeek.toFixed(2)} kg/wk | target <= ${m.maxLossPctPerWeek || 1.0}% BW/wk` : 'Need 2+ weigh-ins'}${trend && trend.tooFast ? '<br><strong>! Faster than target: consider eating a little more</strong>' : ''}</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">Latest Run (${lastRun ? esc(lastRun.date.slice(5)) : '-'})</div>
         <div class="stat-val">${lastRun ? Number(lastRun.km).toFixed(2) + ' km' : '-'}</div>
-        <div class="stat-sub">${lastRun ? `${lastRun.hr} bpm avg (${lastRun.maxHr || '-'} max) | VO2 ${lastRun.vo2 || 39.8}` : 'No runs'}</div>
+        <div class="stat-sub">${lastRun ? `${esc(lastRun.hr || '-')} bpm avg (${esc(lastRun.maxHr || '-')} max)${lastVo2Run ? ` | VO2 ${esc(lastVo2Run.vo2)}` : ''}` : 'No runs'}</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">Running Volume (This Week)</div>
+        <div class="stat-val">${thisWeek ? thisWeek.km.toFixed(1) + ' km/wk' : '-'}</div>
+        <div class="stat-sub">${totalRunsKm.toFixed(1)} km total over ${state.runLog.length} runs${rhrStr}${thisWeek && thisWeek.jump ? `<br><strong>! +${Math.round(thisWeek.change * 100)}% vs last week (&gt;10%)</strong>` : ''}</div>
       </div>
       <div class="stat-box">
         <div class="stat-label">RR Sessions Logged</div>
         <div class="stat-val">${state.rrSessions.length}</div>
-        <div class="stat-sub">Last: ${lastRR ? lastRR.date : 'None'} (Pull ${lastRR ? lastRR.pull_sets : '-'})</div>
-      </div>
-      <div class="stat-box">
-        <div class="stat-label">Total Running Volume</div>
-        <div class="stat-val">${totalRunsKm.toFixed(1)} km</div>
-        <div class="stat-sub">${state.runLog.length} Apple Watch runs | RHR 57 bpm</div>
+        <div class="stat-sub">Last: ${lastRR ? esc(lastRR.date) : 'None'} (Pull ${lastRR ? esc(lastRR.pull_sets) : '-'})</div>
       </div>
     `;
     document.getElementById('dashboard-kpis').innerHTML = kpiHtml;
@@ -443,51 +217,62 @@
     const barWidth = 28;
     const filled = Math.round((pct / 100) * barWidth);
     const barStr = '#'.repeat(filled) + '.'.repeat(Math.max(0, barWidth - filled));
+    const lastZ2 = [...sortedRuns].reverse().find(r => r.hr && !L.runHrFlag(r) && /easy|zone\s*2|z2/i.test(r.type || ''));
+    let eta = '';
+    if (haveGoal && trend && trend.ratePerWeek < 0 && remaining > 0) {
+      eta = ` (ETA ~${Math.ceil(remaining / -trend.ratePerWeek)} wk at current trend)`;
+    }
     const ascii = [
-      `START  : ${startW.toFixed(1)} kg (2026-09-03)`,
-      `CURRENT: ${curWeight.toFixed(1)} kg ([${barStr}] ${pct.toFixed(1)}%)`,
-      `TARGET : ${targetW.toFixed(1)} kg (Est. ~6-8 weeks at -0.8 kg/wk)`,
-      `CARDIO : VO2 Max 39.8 mL/kg/min | RHR 57 bpm | Latest Z2: 8.02 km @ 142 bpm`
+      `START  : ${fmtKg(startW)}${startDate ? ` (${startDate})` : ''}`,
+      `CURRENT: ${fmtKg(curWeight)} ([${barStr}] ${pct.toFixed(1)}%)`,
+      `TARGET : ${fmtKg(targetW)}${eta}`,
+      `CARDIO : ${lastVo2Run ? `VO2 Max ${lastVo2Run.vo2}` : 'VO2 Max -'}${m.rhr ? ` | RHR ${m.rhr} bpm` : ''}${lastZ2 ? ` | Latest Z2: ${Number(lastZ2.km).toFixed(2)} km @ ${lastZ2.hr} bpm` : ''}`
     ].join('\n');
     document.getElementById('ascii-progress').textContent = ascii;
+    document.getElementById('weight-rate-summary').textContent = trendLine(trend);
 
     // Next Workout Target Table
     const nextTbody = document.querySelector('#next-target-table tbody');
     if (lastRR) {
-      const rows = [
-        ['1A: Pull', state.activeProgressions.pull, lastRR.pull_sets, computeNextSets(lastRR.pull_sets, 8)],
-        ['1B: Squat', state.activeProgressions.squat, lastRR.squat_sets, computeNextSets(lastRR.squat_sets, 8)],
-        ['2A: Dip', state.activeProgressions.dip, lastRR.dip_sets, computeNextSets(lastRR.dip_sets, 8)],
-        ['2B: Hinge', state.activeProgressions.hinge, lastRR.hinge_sets, computeNextSets(lastRR.hinge_sets, 12)],
-        ['3A: Row', state.activeProgressions.row, lastRR.row_sets, computeNextSets(lastRR.row_sets, 12)],
-        ['3B: Push', state.activeProgressions.push, lastRR.push_sets, computeNextSets(lastRR.push_sets, 8)],
-        ['Core (2x)', 'Plank / Side / Arch', `${lastRR.antiext} | ${lastRR.antirot} | ${lastRR.ext}`, 'Plank 2x35s | Side 2x20s | Arch 2x9']
-      ];
+      const rows = RR_SLOTS.map(([label, id]) => {
+        const step = state.activeProgressions[id] || lastRR[id + '_prog'];
+        const sets = lastRR[id + '_sets'];
+        return [label, step, sets, nextBadge(id, step, nextFor(id, sets))];
+      });
       nextTbody.innerHTML = rows.map(r => `
         <tr>
-          <td><strong>${r[0]}</strong></td>
-          <td class="muted">${r[1]}</td>
-          <td>${r[2]}</td>
+          <td><strong>${esc(r[0])}</strong></td>
+          <td class="muted">${esc(r[1])}</td>
+          <td>${esc(r[2])}</td>
           <td><span class="badge badge-invert">${r[3]}</span></td>
         </tr>
-      `).join('');
+      `).join('') + `
+        <tr>
+          <td><strong>Core (2x)</strong></td>
+          <td class="muted">Plank / Side / Arch</td>
+          <td>${esc(lastRR.antiext)} | ${esc(lastRR.antirot)} | ${esc(lastRR.ext)}</td>
+          <td><span class="badge badge-invert">+5s holds / +1 rep</span></td>
+        </tr>
+      `;
+    } else {
+      nextTbody.innerHTML = '<tr><td colspan="4" class="muted">No sessions logged yet.</td></tr>';
     }
 
     // Active Progressions Quick Switcher
     const progTbody = document.querySelector('#active-progressions-table tbody');
     progTbody.innerHTML = EXERCISE_DB.slice(0, 9).map(ex => {
       const currentVal = state.activeProgressions[ex.id] || ex.ladders[0];
-      const optionsHtml = ex.ladders.map(l => `<option value="${l}" ${l === currentVal ? 'selected' : ''}>${l}</option>`).join('');
+      const optionsHtml = ex.ladders.map(l => `<option value="${esc(l)}" ${l === currentVal ? 'selected' : ''}>${esc(l)}</option>`).join('');
       return `
         <tr>
-          <td><strong>${ex.slot}</strong></td>
+          <td><strong>${esc(ex.slot)}</strong></td>
           <td>
-            <select data-prog-switch="${ex.id}" aria-label="${ex.slot} Progression">
+            <select data-prog-switch="${esc(ex.id)}" aria-label="${esc(ex.slot)} Progression">
               ${optionsHtml}
             </select>
           </td>
-          <td>${ex.targetRange}</td>
-          <td class="muted">Hit max reps x3 -> next level</td>
+          <td>${esc(ex.targetRange)}</td>
+          <td class="muted">${ex.maxRep ? `Hit ${ex.maxRep}x3 -> next level; below ${ex.minRep} -> easier step` : 'Extend hold time'}</td>
         </tr>
       `;
     }).join('');
@@ -496,9 +281,9 @@
     const miniSchedTbody = document.querySelector('#mini-schedule-table tbody');
     miniSchedTbody.innerHTML = state.schedule.map(s => `
       <tr>
-        <td><strong>${s.day}</strong></td>
-        <td>${s.type}</td>
-        <td class="muted">${s.rx}</td>
+        <td><strong>${esc(s.day)}</strong></td>
+        <td>${esc(s.type)}</td>
+        <td class="muted">${esc(s.rx)}</td>
       </tr>
     `).join('');
   }
@@ -507,20 +292,12 @@
   // RENDER VIEW 2: LOG & EDIT WORKOUTS
   // ==========================================
   function populateLoggerSelects() {
-    const map = [
-      ['rr-pull-prog', 'pull'],
-      ['rr-squat-prog', 'squat'],
-      ['rr-dip-prog', 'dip'],
-      ['rr-hinge-prog', 'hinge'],
-      ['rr-row-prog', 'row'],
-      ['rr-push-prog', 'push']
-    ];
-    map.forEach(([selectId, exId]) => {
-      const sel = document.getElementById(selectId);
-      const ex = EXERCISE_DB.find(e => e.id === exId);
-      if (!sel || !ex) return;
+    RR_SLOTS.forEach(([, exId]) => {
+      const sel = document.getElementById(`rr-${exId}-prog`);
+      const ex = exById(exId);
+      if (!sel || !ex.ladders) return;
       const active = state.activeProgressions[exId] || ex.ladders[0];
-      sel.innerHTML = ex.ladders.map(l => `<option value="${l}" ${l === active ? 'selected' : ''}>${l}</option>`).join('');
+      sel.innerHTML = ex.ladders.map(l => `<option value="${esc(l)}" ${l === active ? 'selected' : ''}>${esc(l)}</option>`).join('');
     });
   }
 
@@ -529,36 +306,29 @@
     const sorted = [...state.rrSessions].sort((a, b) => b.date.localeCompare(a.date));
     document.getElementById('rr-count-meta').textContent = `${sorted.length} session(s) logged`;
 
+    const cell = (label, s, id) =>
+      `<div><strong>${label}:</strong> ${esc(s[id + '_sets'])} <span class="muted">(${esc(shortProg(s[id + '_prog']))})</span></div>`;
+
     tbody.innerHTML = sorted.map(s => {
-      const totalVol = sumReps(s.pull_sets) + sumReps(s.squat_sets) + sumReps(s.dip_sets) +
-                       sumReps(s.hinge_sets) + sumReps(s.row_sets) + sumReps(s.push_sets);
+      const totalVol = RR_SLOTS.reduce((acc, [, id]) => acc + L.sumReps(s[id + '_sets']), 0);
       return `
         <tr>
-          <td><strong>${s.date}</strong></td>
+          <td><strong>${esc(s.date)}</strong></td>
           <td>${s.bw ? Number(s.bw).toFixed(1) + 'kg' : '-'}</td>
+          <td>${cell('P', s, 'pull')}${cell('S', s, 'squat')}</td>
+          <td>${cell('D', s, 'dip')}${cell('H', s, 'hinge')}</td>
+          <td>${cell('R', s, 'row')}${cell('PU', s, 'push')}</td>
           <td>
-            <div><strong>P:</strong> ${s.pull_sets} <span class="muted">(${shortProg(s.pull_prog)})</span></div>
-            <div><strong>S:</strong> ${s.squat_sets} <span class="muted">(${shortProg(s.squat_prog)})</span></div>
-          </td>
-          <td>
-            <div><strong>D:</strong> ${s.dip_sets} <span class="muted">(${shortProg(s.dip_prog)})</span></div>
-            <div><strong>H:</strong> ${s.hinge_sets} <span class="muted">(${shortProg(s.hinge_prog)})</span></div>
-          </td>
-          <td>
-            <div><strong>R:</strong> ${s.row_sets} <span class="muted">(${shortProg(s.row_prog)})</span></div>
-            <div><strong>PU:</strong> ${s.push_sets} <span class="muted">(${shortProg(s.push_prog)})</span></div>
-          </td>
-          <td>
-            <div>${s.antiext}</div>
-            <div>${s.antirot}</div>
-            <div>${s.ext}</div>
+            <div>${esc(s.antiext)}</div>
+            <div>${esc(s.antirot)}</div>
+            <div>${esc(s.ext)}</div>
           </td>
           <td><strong>${totalVol}</strong> reps</td>
-          <td class="muted">${s.notes || ''}</td>
+          <td class="muted">${esc(s.notes)}</td>
           <td>
             <div class="btn-row">
-              <button type="button" class="btn-inline" data-edit-rr="${s.id}">edit</button>
-              <button type="button" class="btn-inline" data-del-rr="${s.id}">del</button>
+              <button type="button" class="btn-inline" data-edit-rr="${esc(s.id)}">edit</button>
+              <button type="button" class="btn-inline" data-del-rr="${esc(s.id)}">del</button>
             </div>
           </td>
         </tr>
@@ -571,40 +341,14 @@
     return str.replace(/^L\d:\s*/, '').split('(')[0].trim();
   }
 
-  // Shorthand Parser: e.g. "pullu 4 4 4 singlelegraisedsquat 8 8 8 floorslideprogression 9 9 9 dips 5 5 5 inverted rows 7 7 7 diamond p 4 4 4 plank 30sx2"
   function parseShorthandToForm(raw) {
-    if (!raw || !raw.trim()) return false;
-    const s = raw.toLowerCase();
-
-    function extractTriple(regex) {
-      const m = s.match(regex);
-      if (m) return `${m[1]},${m[2]},${m[3]}`;
-      return null;
-    }
-
-    const pull = extractTriple(/pull\w*\s+(\d+)\s*[,\s]\s*(\d+)\s*[,\s]\s*(\d+)/);
-    const squat = extractTriple(/(?:squat\w*|step\w*|bss|shrimp\w*)\s+(\d+)\s*[,\s]\s*(\d+)\s*[,\s]\s*(\d+)/);
-    const hinge = extractTriple(/(?:floor\w*|slide\w*|hinge\w*|nordic\w*|curl\w*)\s+(\d+)\s*[,\s]\s*(\d+)\s*[,\s]\s*(\d+)/);
-    const dip = extractTriple(/dip\w*\s+(\d+)\s*[,\s]\s*(\d+)\s*[,\s]\s*(\d+)/);
-    const row = extractTriple(/(?:inverted\s+rows?|rows?)\s+(\d+)\s*[,\s]\s*(\d+)\s*[,\s]\s*(\d+)/);
-    const push = extractTriple(/(?:diamond\s*p\w*|push\w*|pppu)\s+(\d+)\s*[,\s]\s*(\d+)\s*[,\s]\s*(\d+)/);
-
-    if (pull) document.getElementById('rr-pull-sets').value = pull;
-    if (squat) document.getElementById('rr-squat-sets').value = squat + ' (/leg)';
-    if (hinge) document.getElementById('rr-hinge-sets').value = hinge;
-    if (dip) document.getElementById('rr-dip-sets').value = dip;
-    if (row) document.getElementById('rr-row-sets').value = row;
-    if (push) document.getElementById('rr-push-sets').value = push;
-
-    const plankM = s.match(/plank\s+([0-9sx]+)/);
-    if (plankM) document.getElementById('rr-antiext').value = 'Plank ' + plankM[1];
-
-    const sideM = s.match(/side\s*planks?\s+([0-9sx]+)/);
-    if (sideM) document.getElementById('rr-antirot').value = 'Side Plank ' + sideM[1];
-
-    const archM = s.match(/(?:arch|reverse\s*hyper|revhyper)[a-z\s]*([0-9sx]+)/);
-    if (archM) document.getElementById('rr-ext').value = 'Arch/RevHyper ' + archM[1];
-
+    const parsed = L.parseShorthand(raw);
+    if (!parsed) return false;
+    Object.entries(parsed).forEach(([field, val]) => {
+      if (!val) return;
+      const el = document.getElementById('rr-' + field.replace('_sets', '-sets'));
+      if (el) el.value = val;
+    });
     if (!document.getElementById('rr-date').value) {
       document.getElementById('rr-date').value = new Date().toISOString().slice(0, 10);
     }
@@ -617,14 +361,17 @@
     document.getElementById('rr-edit-id').value = '';
     document.getElementById('rr-form-title').textContent = 'Log New RR Session (Prefilled Next Target)';
     document.getElementById('rr-date').value = new Date().toISOString().slice(0, 10);
-    document.getElementById('rr-bw').value = getLatestWeight().toFixed(1);
+    const w = getLatestWeight();
+    document.getElementById('rr-bw').value = w != null ? w.toFixed(1) : '';
     if (last) {
-      document.getElementById('rr-pull-sets').value = computeNextSets(last.pull_sets, 8).replace(/\s*\[.*\]/, '');
-      document.getElementById('rr-squat-sets').value = computeNextSets(last.squat_sets, 8).replace(/\s*\[.*\]/, '');
-      document.getElementById('rr-dip-sets').value = computeNextSets(last.dip_sets, 8).replace(/\s*\[.*\]/, '');
-      document.getElementById('rr-hinge-sets').value = computeNextSets(last.hinge_sets, 12).replace(/\s*\[.*\]/, '');
-      document.getElementById('rr-row-sets').value = computeNextSets(last.row_sets, 12).replace(/\s*\[.*\]/, '');
-      document.getElementById('rr-push-sets').value = computeNextSets(last.push_sets, 8).replace(/\s*\[.*\]/, '');
+      RR_SLOTS.forEach(([, id]) => {
+        const next = nextFor(id, last[id + '_sets']);
+        document.getElementById(`rr-${id}-sets`).value = next.sets;
+        // Level-up targets (minRep x3) belong to the next ladder step.
+        const sel = document.getElementById(`rr-${id}-prog`);
+        const up = next.action === 'level_up' && adjacentStep(id, sel.value, +1);
+        if (up) sel.value = up;
+      });
       document.getElementById('rr-antiext').value = last.antiext || 'Plank 2x30s';
       document.getElementById('rr-antirot').value = last.antirot || 'Side Plank 2x15s/side';
       document.getElementById('rr-ext').value = last.ext || 'Arch/RevHyper 2x8';
@@ -638,15 +385,15 @@
     const tbody = document.querySelector('#editable-schedule-table tbody');
     tbody.innerHTML = state.schedule.map((item, idx) => `
       <tr>
-        <td><strong>${item.day}</strong></td>
+        <td><strong>${esc(item.day)}</strong></td>
         <td>
-          <input type="text" data-sched-idx="${idx}" data-sched-field="type" value="${escapeAttr(item.type)}" aria-label="${item.day} session type">
+          <input type="text" data-sched-idx="${idx}" data-sched-field="type" value="${esc(item.type)}" aria-label="${esc(item.day)} session type">
         </td>
         <td>
-          <input type="text" data-sched-idx="${idx}" data-sched-field="rx" value="${escapeAttr(item.rx)}" aria-label="${item.day} prescription">
+          <input type="text" data-sched-idx="${idx}" data-sched-field="rx" value="${esc(item.rx)}" aria-label="${esc(item.day)} prescription">
         </td>
         <td>
-          <input type="text" data-sched-idx="${idx}" data-sched-field="dur" value="${escapeAttr(item.dur)}" aria-label="${item.day} duration">
+          <input type="text" data-sched-idx="${idx}" data-sched-field="dur" value="${esc(item.dur)}" aria-label="${esc(item.day)} duration">
         </td>
       </tr>
     `).join('');
@@ -670,28 +417,28 @@
 
     container.innerHTML = list.map(ex => {
       const currentProg = state.activeProgressions[ex.id] || ex.ladders[0];
-      const customNote = state.customNotes[ex.id] !== undefined ? state.customNotes[ex.id] : ex.defaultNote;
+      const customNote = state.customNotes[ex.id] !== undefined ? state.customNotes[ex.id] : (ex.defaultNote || '');
 
       const ladderHtml = ex.ladders.map(step => {
         const isCur = step === currentProg;
         return `
           <li class="ladder-item ${isCur ? 'current' : ''}">
-            <span>${step}</span>
+            <span>${esc(step)}</span>
             ${isCur
               ? '<span class="badge">ACTIVE</span>'
-              : `<button type="button" class="btn-inline" data-set-ladder="${ex.id}" data-step="${escapeAttr(step)}">Set Active</button>`
+              : `<button type="button" class="btn-inline" data-set-ladder="${esc(ex.id)}" data-step="${esc(step)}">Set Active</button>`
             }
           </li>
         `;
       }).join('');
 
-      const cuesHtml = ex.cues.map(c => `<li>- ${c}</li>`).join('');
+      const cuesHtml = ex.cues.map(c => `<li>- ${esc(c)}</li>`).join('');
 
       return `
         <div class="tile col-6">
           <div class="tile-header">
-            <span>${ex.slot}</span>
-            <span class="meta">Target: ${ex.targetRange}</span>
+            <span>${esc(ex.slot)}</span>
+            <span class="meta">Target: ${esc(ex.targetRange)}</span>
           </div>
           <div class="tile-body">
             <h4>Bodyweight Progression Ladder</h4>
@@ -700,12 +447,12 @@
             <h4 style="margin-top:10px;">Strict Form Cues (Tempo 10X0)</h4>
             <ul style="list-style:none; margin-bottom:8px; font-size:12px;">${cuesHtml}</ul>
 
-            <p style="font-size:11px;" class="muted"><strong>Avoid Faults:</strong> ${ex.faults}</p>
+            <p style="font-size:11px;" class="muted"><strong>Avoid Faults:</strong> ${esc(ex.faults)}</p>
 
             <div class="field" style="margin-top:8px;">
               <label for="note-${ex.id}">Personal Setup / Form Note:</label>
               <div class="btn-row">
-                <input type="text" id="note-${ex.id}" data-ex-note="${ex.id}" value="${escapeAttr(customNote)}" style="flex:1;">
+                <input type="text" id="note-${ex.id}" data-ex-note="${ex.id}" value="${esc(customNote)}" style="flex:1;">
                 <button type="button" class="btn-inline" data-save-ex-note="${ex.id}">Save</button>
               </div>
             </div>
@@ -718,20 +465,32 @@
   // ==========================================
   // RENDER VIEW 5: RUNS, WEIGHT & METRICS
   // ==========================================
+  const EASY_HR_CAP = L.RUN_HR_RULES[0].cap;
+
   function renderMetrics() {
     // Weight Table & SVG Chart
     const sortedW = [...state.weightLog].sort((a, b) => a.date.localeCompare(b.date));
+    const trend = L.weightTrend(state.weightLog, 28, state.meta.maxLossPctPerWeek || 1.0);
+    document.getElementById('weight-goal-meta').textContent =
+      state.meta.targetWeight != null ? `Goal: ${Number(state.meta.targetWeight).toFixed(1)} kg` : '';
+    document.getElementById('weight-trend-meta').textContent = trendLine(trend);
+
     const wTbody = document.querySelector('#weight-table tbody');
     wTbody.innerHTML = [...sortedW].reverse().map((w, i, arr) => {
       const prev = arr[i + 1];
       const delta = prev ? (w.kg - prev.kg) : 0;
       const deltaStr = prev ? (delta > 0 ? `+${delta.toFixed(1)}` : delta.toFixed(1)) : '-';
+      // 7-day rolling mean ending on this entry
+      const d = L.isoToDay(w.date);
+      const win = sortedW.filter(x => { const xd = L.isoToDay(x.date); return xd <= d && xd > d - 7; });
+      const avg = win.reduce((a, x) => a + Number(x.kg), 0) / win.length;
       return `
         <tr>
-          <td><strong>${w.date}</strong></td>
+          <td><strong>${esc(w.date)}</strong></td>
           <td>${Number(w.kg).toFixed(1)} kg</td>
+          <td>${avg.toFixed(1)} kg <span class="muted">(n=${win.length})</span></td>
           <td class="muted">${deltaStr} kg</td>
-          <td><button type="button" class="btn-inline" data-del-wt="${w.id}">del</button></td>
+          <td><button type="button" class="btn-inline" data-del-wt="${esc(w.id)}">del</button></td>
         </tr>
       `;
     }).join('');
@@ -744,33 +503,46 @@
 
     const sortedR = [...sortedRAsc].reverse();
     const totalKm = sortedR.reduce((a, r) => a + Number(r.km || 0), 0);
-    const avgHr = sortedR.length
-      ? Math.round(sortedR.reduce((a, r) => a + Number(r.hr || 0), 0) / sortedR.length)
-      : 0;
-    document.getElementById('run-summary-meta').textContent = `${sortedR.length} runs | ${totalKm.toFixed(2)} km total | Avg HR ${avgHr} bpm`;
+    const withHr = sortedR.filter(r => r.hr);
+    const avgHr = withHr.length ? Math.round(withHr.reduce((a, r) => a + Number(r.hr), 0) / withHr.length) : 0;
+    const flagged = sortedR.filter(r => L.runHrFlag(r)).length;
+    document.getElementById('run-summary-meta').textContent =
+      `${sortedR.length} runs | ${totalKm.toFixed(2)} km total | Avg HR ${avgHr} bpm | ${flagged} over HR cap`;
 
     const rTbody = document.querySelector('#run-table tbody');
     rTbody.innerHTML = sortedR.map(r => {
-      const paceDec = r.km > 0 ? (r.min / r.km) : 0;
-      const pMin = Math.floor(paceDec);
-      const pSec = Math.round((paceDec - pMin) * 60).toString().padStart(2, '0');
-      const hrDisplay = r.hr ? `${r.hr}${r.maxHr ? ' / ' + r.maxHr : ''} bpm` : '-';
-      const pwrDisplay = r.power ? `${r.power}W` : '-';
-      const vo2Display = r.vo2 ? Number(r.vo2).toFixed(1) : '-';
+      const flag = L.runHrFlag(r);
+      const hrDisplay = r.hr ? `${esc(r.hr)}${r.maxHr ? ' / ' + esc(r.maxHr) : ''} bpm` : '-';
+      const flagHtml = flag ? `<br><strong title="Planned ${flag.label} run: cap ${flag.cap} bpm">! +${flag.over} over ${flag.cap}</strong>` : '';
       return `
         <tr>
-          <td><strong>${r.date}</strong></td>
-          <td>${r.type}</td>
+          <td><strong>${esc(r.date)}</strong></td>
+          <td>${esc(r.type)}</td>
           <td><strong>${Number(r.km).toFixed(2)} km</strong></td>
           <td>${Number(r.min).toFixed(1)} m</td>
-          <td>${pMin}:${pSec}/km</td>
-          <td>${hrDisplay}</td>
-          <td class="muted">${pwrDisplay}</td>
-          <td>${vo2Display}</td>
-          <td class="muted">${r.notes || ''}</td>
-          <td><button type="button" class="btn-inline" data-del-run="${r.id}">del</button></td>
+          <td>${L.pace(Number(r.km), Number(r.min))}/km</td>
+          <td>${hrDisplay}${flagHtml}</td>
+          <td class="muted">${r.power ? esc(r.power) + 'W' : '-'}</td>
+          <td>${r.vo2 ? Number(r.vo2).toFixed(1) : '-'}</td>
+          <td class="muted">${esc(r.notes)}</td>
+          <td><button type="button" class="btn-inline" data-del-run="${esc(r.id)}">del</button></td>
         </tr>
       `;
+    }).join('');
+
+    // Weekly volume (Mon-Sun) with >10% jump flag
+    const weeks = L.weeklyKm(state.runLog);
+    const today = L.isoToDay(new Date().toISOString().slice(0, 10));
+    document.querySelector('#weekly-km-table tbody').innerHTML = [...weeks].reverse().map(w => {
+      const inProgress = today - L.isoToDay(w.weekStart) < 7;
+      const change = w.change == null ? '-' : `${w.change > 0 ? '+' : ''}${Math.round(w.change * 100)}%`;
+      return `
+      <tr>
+        <td><strong>${esc(w.weekStart)}</strong>${inProgress ? ' <span class="muted">(in progress)</span>' : ''}</td>
+        <td>${w.km.toFixed(1)} km</td>
+        <td class="${w.jump ? '' : 'muted'}">${inProgress && !w.jump ? '-' : change}${w.jump ? ' <strong>! &gt;10%</strong>' : ''}</td>
+      </tr>
+    `;
     }).join('');
   }
 
@@ -785,27 +557,27 @@
     const plotW = W - padL - padR;
     const plotH = H - padT - padB;
     const minHr = 135, maxHr = 175;
-    const maxKm = 12;
+    const maxKm = Math.max(12, ...sortedR.map(r => Number(r.km || 0)));
 
     const xFor = idx => sortedR.length === 1 ? padL + plotW / 2 : padL + (idx / (sortedR.length - 1)) * plotW;
     const yForHr = hr => padT + plotH - ((Math.min(maxHr, Math.max(minHr, hr || 150)) - minHr) / (maxHr - minHr)) * plotH;
     const hForKm = km => (Math.min(maxKm, km || 0) / maxKm) * plotH;
 
-    const z2Y = yForHr(148);
-    const hrPts = sortedR.map((r, i) => `${xFor(i).toFixed(1)},${yForHr(r.hr).toFixed(1)}`).join(' ');
+    const z2Y = yForHr(EASY_HR_CAP);
+    const hrPts = sortedR.filter(r => r.hr).map(r => `${xFor(sortedR.indexOf(r)).toFixed(1)},${yForHr(r.hr).toFixed(1)}`).join(' ');
 
     const barsAndDots = sortedR.map((r, i) => {
       const cx = xFor(i);
       const bh = hForKm(r.km);
       const by = padT + plotH - bh;
       const hy = yForHr(r.hr);
-      const isZ2 = r.hr && r.hr <= 148;
+      const isZ2 = r.hr && r.hr <= EASY_HR_CAP;
       return `
         <rect x="${(cx - 10).toFixed(1)}" y="${by.toFixed(1)}" width="20" height="${bh.toFixed(1)}" fill="var(--bg-hover)" stroke="var(--border-strong)" stroke-width="1" />
         <text x="${cx.toFixed(1)}" y="${(by + 11).toFixed(1)}" text-anchor="middle" font-size="8.5" fill="var(--fg-muted)">${Number(r.km).toFixed(1)}k</text>
-        <circle cx="${cx.toFixed(1)}" cy="${hy.toFixed(1)}" r="${isZ2 ? 4.5 : 3.5}" fill="currentColor" />
-        <text x="${cx.toFixed(1)}" y="${(hy - 7).toFixed(1)}" text-anchor="middle" font-size="9.5" font-weight="${isZ2 ? '700' : '400'}" fill="currentColor">${r.hr || ''}</text>
-        <text x="${cx.toFixed(1)}" y="${H - 7}" text-anchor="middle" font-size="9" fill="var(--fg-muted)">${r.date.slice(5)}</text>
+        ${r.hr ? `<circle cx="${cx.toFixed(1)}" cy="${hy.toFixed(1)}" r="${isZ2 ? 4.5 : 3.5}" fill="currentColor" />
+        <text x="${cx.toFixed(1)}" y="${(hy - 7).toFixed(1)}" text-anchor="middle" font-size="9.5" font-weight="${isZ2 ? '700' : '400'}" fill="currentColor">${esc(r.hr)}</text>` : ''}
+        <text x="${cx.toFixed(1)}" y="${H - 7}" text-anchor="middle" font-size="9" fill="var(--fg-muted)">${esc(r.date.slice(5))}</text>
       `;
     }).join('');
 
@@ -814,7 +586,7 @@
         <line x1="${padL}" y1="${yForHr(165)}" x2="${W - padR}" y2="${yForHr(165)}" stroke="var(--border)" stroke-dasharray="2,2"/>
         <text x="4" y="${yForHr(165) + 3}" font-size="8.5" fill="var(--fg-muted)">165 bpm</text>
         <line x1="${padL}" y1="${z2Y.toFixed(1)}" x2="${W - padR}" y2="${z2Y.toFixed(1)}" stroke="var(--border-strong)" stroke-dasharray="4,3"/>
-        <text x="4" y="${(z2Y + 3).toFixed(1)}" font-size="8.5" fill="currentColor">148 Z2</text>
+        <text x="4" y="${(z2Y + 3).toFixed(1)}" font-size="8.5" fill="currentColor">${EASY_HR_CAP} Z2</text>
         <text x="${W - padR + 4}" y="${padT + 8}" font-size="8.5" fill="var(--fg-muted)">Bars: km</text>
         <text x="${W - padR + 4}" y="${padT + 20}" font-size="8.5" fill="currentColor">Line: HR</text>
         ${barsAndDots}
@@ -830,35 +602,42 @@
       return;
     }
     const W = 500, H = 155, padL = 38, padR = 18, padT = 14, padB = 24;
-    const minKg = 72;
-    const maxKg = 90;
+    const target = state.meta.targetWeight != null ? Number(state.meta.targetWeight) : null;
+    const kgs = sortedW.map(w => Number(w.kg)).concat(target != null ? [target] : []);
+    const minKg = Math.floor(Math.min(...kgs) - 1);
+    const maxKg = Math.ceil(Math.max(...kgs) + 1);
     const plotW = W - padL - padR;
     const plotH = H - padT - padB;
 
     const yFor = kg => padT + plotH - ((kg - minKg) / (maxKg - minKg)) * plotH;
-    const xFor = idx => sortedW.length === 1 ? padL + plotW / 2 : padL + (idx / (sortedW.length - 1)) * plotW;
+    // Time-proportional x axis so sparse weigh-ins aren't evenly spaced.
+    const d0 = L.isoToDay(sortedW[0].date);
+    const span = Math.max(1, L.isoToDay(sortedW[sortedW.length - 1].date) - d0);
+    const xFor = w => sortedW.length === 1 ? padL + plotW / 2 : padL + ((L.isoToDay(w.date) - d0) / span) * plotW;
 
-    const targetY = yFor(state.meta.targetWeight || 73.5);
-    const pts = sortedW.map((d, i) => `${xFor(i).toFixed(1)},${yFor(d.kg).toFixed(1)}`).join(' ');
-
-    const circles = sortedW.map((d, i) => {
-      const cx = xFor(i).toFixed(1);
+    const pts = sortedW.map(d => `${xFor(d).toFixed(1)},${yFor(d.kg).toFixed(1)}`).join(' ');
+    const circles = sortedW.map(d => {
+      const cx = xFor(d).toFixed(1);
       const cy = yFor(d.kg).toFixed(1);
       return `
         <circle cx="${cx}" cy="${cy}" r="3.5" fill="currentColor" />
-        <text x="${cx}" y="${cy - 7}" text-anchor="middle" font-size="10" fill="currentColor">${d.kg.toFixed(1)}</text>
-        <text x="${cx}" y="${H - 6}" text-anchor="middle" font-size="9" fill="var(--fg-muted)">${d.date.slice(5)}</text>
+        <text x="${cx}" y="${cy - 7}" text-anchor="middle" font-size="10" fill="currentColor">${Number(d.kg).toFixed(1)}</text>
+        <text x="${cx}" y="${H - 6}" text-anchor="middle" font-size="9" fill="var(--fg-muted)">${esc(d.date.slice(5))}</text>
       `;
     }).join('');
 
+    const gridKg = [maxKg - 1, Math.round((minKg + maxKg) / 2)];
+    const grid = gridKg.map(kg => `
+        <line x1="${padL}" y1="${yFor(kg)}" x2="${W - padR}" y2="${yFor(kg)}" stroke="var(--border)" stroke-dasharray="2,2"/>
+        <text x="4" y="${yFor(kg) + 3}" font-size="9" fill="var(--fg-muted)">${kg}kg</text>`).join('');
+    const targetLine = target == null ? '' : `
+        <line x1="${padL}" y1="${yFor(target)}" x2="${W - padR}" y2="${yFor(target)}" stroke="var(--border-strong)" stroke-dasharray="4,3"/>
+        <text x="4" y="${yFor(target) + 3}" font-size="9" fill="currentColor">${target.toFixed(1)}</text>`;
+
     wrap.innerHTML = `
       <svg viewBox="0 0 ${W} ${H}" width="100%" height="155" role="img" aria-label="Weight progress chart">
-        <line x1="${padL}" y1="${yFor(88)}" x2="${W - padR}" y2="${yFor(88)}" stroke="var(--border)" stroke-dasharray="2,2"/>
-        <text x="4" y="${yFor(88) + 3}" font-size="9" fill="var(--fg-muted)">88kg</text>
-        <line x1="${padL}" y1="${yFor(80)}" x2="${W - padR}" y2="${yFor(80)}" stroke="var(--border)" stroke-dasharray="2,2"/>
-        <text x="4" y="${yFor(80) + 3}" font-size="9" fill="var(--fg-muted)">80kg</text>
-        <line x1="${padL}" y1="${targetY}" x2="${W - padR}" y2="${targetY}" stroke="var(--border-strong)" stroke-dasharray="4,3"/>
-        <text x="4" y="${targetY + 3}" font-size="9" fill="currentColor">73.5</text>
+        ${grid}
+        ${targetLine}
         <polyline fill="none" stroke="currentColor" stroke-width="2" points="${pts}" />
         ${circles}
       </svg>
@@ -872,8 +651,8 @@
     const lines = [
       '# FIT // WORKOUT & RECOMPOSITION LOG',
       '',
-      `- **Current Weight:** ${getLatestWeight().toFixed(1)} kg (Start: 88.0 kg -> Goal: 73.5 kg)`,
-      `- **Cardio Vitals:** VO2 Max 39.8 mL/(kg·min) | Resting HR 57 bpm`,
+      `- **Current Weight:** ${fmtKg(getLatestWeight())} (Start: ${fmtKg(state.meta.startWeight)} -> Goal: ${fmtKg(state.meta.targetWeight)})`,
+      `- **Cardio Vitals:** VO2 Max ${(L.latestBy(state.runLog, 'vo2') || {}).vo2 || '-'} mL/(kg·min) | Resting HR ${state.meta.rhr || '-'} bpm`,
       '',
       '## Recommended Routine Sessions',
       '',
@@ -890,10 +669,7 @@
     lines.push('| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |');
     const sortedR = [...state.runLog].sort((a, b) => b.date.localeCompare(a.date));
     sortedR.forEach(r => {
-      const paceDec = r.km > 0 ? (r.min / r.km) : 0;
-      const pMin = Math.floor(paceDec);
-      const pSec = Math.round((paceDec - pMin) * 60).toString().padStart(2, '0');
-      lines.push(`| ${r.date} | ${r.type} | ${Number(r.km).toFixed(2)} km | ${Number(r.min).toFixed(1)} m | ${pMin}:${pSec}/km | ${r.hr || '-'}${r.maxHr ? '/' + r.maxHr : ''} bpm | ${r.power ? r.power + 'W' : '-'} | ${r.vo2 || '-'} | ${r.notes || ''} |`);
+      lines.push(`| ${r.date} | ${r.type} | ${Number(r.km).toFixed(2)} km | ${Number(r.min).toFixed(1)} m | ${L.pace(Number(r.km), Number(r.min))}/km | ${r.hr || '-'}${r.maxHr ? '/' + r.maxHr : ''} bpm | ${r.power ? r.power + 'W' : '-'} | ${r.vo2 || '-'} | ${r.notes || ''} |`);
     });
 
     return lines.join('\n');
@@ -914,15 +690,15 @@
     if (preview) {
       preview.value = generateMarkdownExport();
     }
-    const savedToken = localStorage.getItem(GH_TOKEN_KEY);
+    let savedToken = null, savedRepo = null;
+    try {
+      savedToken = sessionStorage.getItem(GH_TOKEN_KEY);
+      savedRepo = localStorage.getItem(GH_REPO_KEY);
+    } catch (e) {}
     const tokenInput = document.getElementById('gh-token');
-    if (savedToken && tokenInput && !tokenInput.value) {
-      tokenInput.value = savedToken;
-    }
-  }
-
-  function escapeAttr(str) {
-    return String(str || '').replace(/"/g, '&quot;');
+    if (savedToken && tokenInput && !tokenInput.value) tokenInput.value = savedToken;
+    const repoInput = document.getElementById('gh-repo');
+    if (savedRepo && repoInput && !repoInput.value) repoInput.value = savedRepo;
   }
 
   function renderAll() {
@@ -1297,7 +1073,7 @@
   });
 
   document.getElementById('btn-reset-schedule').addEventListener('click', () => {
-    state.schedule = JSON.parse(JSON.stringify(DEFAULT_STATE.schedule));
+    state.schedule = clone(DEFAULT_STATE.schedule);
     saveState('DEFAULT SCHEDULE RESTORED');
   });
 
@@ -1369,7 +1145,7 @@
     e.preventDefault();
     try {
       const parsed = JSON.parse(document.getElementById('import-json-input').value);
-      state = Object.assign({}, DEFAULT_STATE, parsed);
+      state = withDefaults(parsed);
       saveState('STATE IMPORTED');
     } catch (err) {
       showToast('INVALID JSON');
@@ -1377,18 +1153,32 @@
   });
 
   document.getElementById('btn-factory-reset').addEventListener('click', () => {
-    state = JSON.parse(JSON.stringify(DEFAULT_STATE));
-    saveState('RESET TO BASELINE');
+    if (!confirm('Erase ALL logged data in this browser? Export JSON first if unsure.')) return;
+    state = clone(DEFAULT_STATE);
+    saveState('ALL DATA CLEARED');
   });
 
-  // GitHub Direct API Sync
+  // GitHub Direct API Sync (private repos only: this data is personal)
+  function ghHeaders(token, accept = 'application/vnd.github+json') {
+    return {
+      'Authorization': `Bearer ${token}`,
+      'Accept': accept,
+      'X-GitHub-Api-Version': '2022-11-28'
+    };
+  }
+
+  async function assertPrivateRepo(repo, token) {
+    const res = await fetch(`https://api.github.com/repos/${repo}`, { headers: ghHeaders(token) });
+    if (!res.ok) throw new Error(`Cannot read repo ${repo} (HTTP ${res.status}). Check the name and token.`);
+    const info = await res.json();
+    if (!info.private) {
+      throw new Error(`Refusing to sync: ${repo} is PUBLIC. Use a private repo for your data (e.g. ${repo.split('/')[0]}/FIT-data).`);
+    }
+  }
+
   async function githubUpsertFile(repo, branch, token, path, contentStr, message) {
     const url = `https://api.github.com/repos/${repo}/contents/${path}`;
-    const headers = {
-      'Authorization': `Bearer ${token}`,
-      'Accept': 'application/vnd.github+json',
-      'Content-Type': 'application/json'
-    };
+    const headers = Object.assign(ghHeaders(token), { 'Content-Type': 'application/json' });
     let sha = null;
     const getRes = await fetch(`${url}?ref=${encodeURIComponent(branch)}`, { headers });
     if (getRes.ok) {
@@ -1408,21 +1198,28 @@
     }
   }
 
+  function readSyncForm() {
+    const repo = document.getElementById('gh-repo').value.trim();
+    const branch = document.getElementById('gh-branch').value.trim() || 'main';
+    const token = document.getElementById('gh-token').value.trim();
+    if (!repo || !token) throw new Error('Enter a private repository and a fine-grained token first.');
+    try {
+      sessionStorage.setItem(GH_TOKEN_KEY, token);
+      localStorage.setItem(GH_REPO_KEY, repo);
+    } catch (e) {}
+    return { repo, branch, token };
+  }
+
   document.getElementById('gh-sync-form').addEventListener('submit', async e => {
     e.preventDefault();
-    const repo = document.getElementById('gh-repo').value.trim();
-    const branch = document.getElementById('gh-branch').value.trim();
-    const token = document.getElementById('gh-token').value.trim();
     const statusEl = document.getElementById('gh-sync-status');
-    if (!token) {
-      statusEl.textContent = 'Error: Enter a GitHub Personal Access Token first.';
-      return;
-    }
-    localStorage.setItem(GH_TOKEN_KEY, token);
-    statusEl.textContent = 'Pushing data.json and WORKOUT_LOG.md to GitHub...';
     try {
-      await githubUpsertFile(repo, branch, token, 'data.json', JSON.stringify(state, null, 2), 'Sync FIT state from web UI');
-      await githubUpsertFile(repo, branch, token, 'WORKOUT_LOG.md', generateMarkdownExport(), 'Sync WORKOUT_LOG.md from web UI');
+      const { repo, branch, token } = readSyncForm();
+      statusEl.textContent = `Checking ${repo} is private...`;
+      await assertPrivateRepo(repo, token);
+      statusEl.textContent = 'Pushing data.json and WORKOUT_LOG.md...';
+      await githubUpsertFile(repo, branch, token, 'data.json', JSON.stringify(state, null, 2) + '\n', 'Sync FIT state from web UI');
+      await githubUpsertFile(repo, branch, token, 'WORKOUT_LOG.md', generateMarkdownExport() + '\n', 'Sync WORKOUT_LOG.md from web UI');
       statusEl.textContent = `Synced to ${repo}@${branch} at ${new Date().toLocaleTimeString()}`;
       showToast('SYNCED TO GITHUB');
     } catch (err) {
@@ -1431,15 +1228,16 @@
   });
 
   document.getElementById('btn-gh-pull').addEventListener('click', async () => {
-    const repo = document.getElementById('gh-repo').value.trim();
-    const branch = document.getElementById('gh-branch').value.trim();
     const statusEl = document.getElementById('gh-sync-status');
-    statusEl.textContent = 'Fetching latest data.json...';
     try {
-      const res = await fetch(`https://raw.githubusercontent.com/${repo}/${branch}/data.json?t=${Date.now()}`);
+      const { repo, branch, token } = readSyncForm();
+      statusEl.textContent = 'Fetching latest data.json...';
+      const res = await fetch(
+        `https://api.github.com/repos/${repo}/contents/data.json?ref=${encodeURIComponent(branch)}`,
+        { headers: ghHeaders(token, 'application/vnd.github.raw+json'), cache: 'no-store' }
+      );
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const remoteState = await res.json();
-      state = Object.assign({}, DEFAULT_STATE, remoteState);
+      state = withDefaults(await res.json());
       saveState('PULLED FROM GITHUB');
       statusEl.textContent = `Pulled latest data.json from ${repo}@${branch}.`;
     } catch (err) {
@@ -1469,7 +1267,10 @@
   document.getElementById('rr-date').value = todayIso;
   document.getElementById('wt-date').value = todayIso;
   document.getElementById('run-date').value = todayIso;
+  // Tokens used to persist in localStorage; keep them for this tab only now.
+  try { localStorage.removeItem(GH_TOKEN_KEY); } catch (e) {}
   applyColorSchemeMeta();
   prefillNextTargetIntoForm();
   renderAll();
+  seedFromLocalDataJson();
 })();

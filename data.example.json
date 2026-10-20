@@ -1,0 +1,52 @@
+{
+  "meta": {
+    "startWeight": 90.0,
+    "startDate": "2026-01-05",
+    "targetWeight": 80.0,
+    "programStart": "2026-01-05",
+    "tdee": 3000,
+    "targetKcal": 2400,
+    "avgSteps": 10000,
+    "rhr": 60,
+    "maxLossPctPerWeek": 1.0
+  },
+  "activeProgressions": {
+    "pull": "L3: Pull-Up Negatives (5-10s eccentric)",
+    "squat": "L2: Full Depth Bodyweight Squat",
+    "dip": "L2: Negative Dips (5-8s eccentric)",
+    "hinge": "L2: Glute Bridge Hold / Marching Bridge",
+    "row": "L1: Incline Rows (45 deg body angle)",
+    "push": "L2: Full Standard Push-Up (Hollow body)"
+  },
+  "customNotes": {},
+  "rrSessions": [
+    {
+      "id": "rr-2026-01-05",
+      "date": "2026-01-05",
+      "bw": 90.0,
+      "pull_prog": "L3: Pull-Up Negatives (5-10s eccentric)",
+      "pull_sets": "5,5,4",
+      "squat_prog": "L2: Full Depth Bodyweight Squat",
+      "squat_sets": "8,8,8",
+      "dip_prog": "L2: Negative Dips (5-8s eccentric)",
+      "dip_sets": "5,5,5",
+      "hinge_prog": "L2: Glute Bridge Hold / Marching Bridge",
+      "hinge_sets": "10,10,10",
+      "row_prog": "L1: Incline Rows (45 deg body angle)",
+      "row_sets": "10,9,9",
+      "push_prog": "L2: Full Standard Push-Up (Hollow body)",
+      "push_sets": "6,6,5",
+      "antiext": "Plank 2x30s",
+      "antirot": "Side Plank 2x15s/side",
+      "ext": "Arch 2x8",
+      "notes": "Example session"
+    }
+  ],
+  "weightLog": [
+    { "id": "w1", "date": "2026-01-05", "kg": 90.0, "kcal": null },
+    { "id": "w2", "date": "2026-01-12", "kg": 89.3, "kcal": null }
+  ],
+  "runLog": [
+    { "id": "r1", "date": "2026-01-06", "type": "Easy Run (Zone 2 - No Strides)", "km": 5.0, "min": 38.0, "hr": 145, "maxHr": 152, "notes": "" }
+  ]
+}
