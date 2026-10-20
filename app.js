@@ -6,7 +6,7 @@
 (function () {
   'use strict';
 
-  const STORAGE_KEY = 'fit_suckless_state_v2';
+  const STORAGE_KEY = 'fit_suckless_state_v3';
   const GH_TOKEN_KEY = 'fit_suckless_gh_token';
 
   // Complete 100% Bodyweight-Only Exercise Ladders & Form Guides
@@ -291,17 +291,16 @@
       { id: 'w5', date: '2026-10-19', kg: 79.0, kcal: null }
     ],
     runLog: [
-      { id: 'r1', date: '2026-10-01', type: 'Easy Run (Z2 + Strides)', km: 5.54, min: 34.8, hr: 158, notes: 'Apple Health' },
-      { id: 'r2', date: '2026-10-04', type: 'Tempo / Threshold Run', km: 7.45, min: 45.7, hr: 162, notes: 'Apple Health' },
-      { id: 'r3', date: '2026-10-07', type: 'Long Aerobic Run', km: 10.67, min: 64.9, hr: 158, notes: 'Apple Health' },
-      { id: 'r4', date: '2026-10-09', type: 'Easy Run (Z2 + Strides)', km: 5.05, min: 31.3, hr: 152, notes: 'Apple Health' },
-      { id: 'r5', date: '2026-10-10', type: 'Long Aerobic Run', km: 10.17, min: 65.5, hr: 154, notes: 'Apple Health' },
-      { id: 'r6', date: '2026-10-12', type: 'Easy Run (Z2 + Strides)', km: 6.13, min: 38.4, hr: 153, notes: 'Apple Health' },
-      { id: 'r7', date: '2026-10-14', type: 'Tempo / Threshold Run', km: 8.39, min: 52.8, hr: 160, notes: 'Apple Health' },
-      { id: 'r8', date: '2026-10-16', type: 'Easy Run (Z2 + Strides)', km: 6.80, min: 43.3, hr: 156, notes: 'Apple Health' },
-      { id: 'r8b', date: '2026-10-17', type: 'Easy Run (Zone 2)', km: 7.88, min: 60.1, hr: 154, notes: 'Apple Health' },
-      { id: 'r9', date: '2026-10-19', type: 'Recovery Jog', km: 2.66, min: 17.5, hr: 147, notes: 'Warm-up run before RR #1' },
-      { id: 'r10', date: '2026-10-20', type: 'Easy Run (Zone 2 - No Strides)', km: 8.02, min: 66.1, hr: 142, notes: 'Pure Zone 2 aerobic run (max HR 151 bpm), skipped strides' }
+      { id: 'r1', date: '2026-09-16', type: 'Tempo / High HR Run', km: 4.00, min: 30.6, hr: 168, maxHr: 190, power: 194, kcal: 335, vo2: 38.2, notes: 'Apple Watch Outdoor Run' },
+      { id: 'r2', date: '2026-09-19', type: 'Aerobic Run', km: 8.02, min: 59.1, hr: 152, maxHr: 180, power: 204, kcal: 658, vo2: 37.9, notes: 'Apple Watch Outdoor Run' },
+      { id: 'r3', date: '2026-09-23', type: 'Aerobic Run', km: 7.62, min: 60.1, hr: 156, maxHr: 183, power: 188, kcal: 655, vo2: 39.2, notes: 'Apple Watch Outdoor Run' },
+      { id: 'r4', date: '2026-09-26', type: 'Steady / Fast Aerobic', km: 8.04, min: 58.0, hr: 157, maxHr: 180, power: 199, kcal: 694, vo2: 40.5, notes: 'Peak VO2 max (40.5)' },
+      { id: 'r5', date: '2026-09-30', type: 'Long Aerobic Run (10K)', km: 10.03, min: 81.3, hr: 156, maxHr: 181, power: 179, kcal: 842, vo2: 40.4, notes: 'First 10K distance logged' },
+      { id: 'r6', date: '2026-10-07', type: 'Tempo / Threshold Run', km: 4.55, min: 34.7, hr: 169, maxHr: 181, power: 190, kcal: 391, vo2: 38.9, notes: 'High HR threshold effort' },
+      { id: 'r7', date: '2026-10-10', type: 'Threshold / Long Run', km: 8.71, min: 64.6, hr: 166, maxHr: 185, power: 190, kcal: 737, vo2: 38.6, notes: 'Apple Watch Outdoor Run' },
+      { id: 'r8', date: '2026-10-14', type: 'Long Aerobic Run (10K)', km: 10.04, min: 75.3, hr: 152, maxHr: 186, power: 191, kcal: 837, vo2: 39.0, notes: 'PR 10K time (75.3 min @ 152 bpm)' },
+      { id: 'r9', date: '2026-10-17', type: 'Easy Aerobic Run', km: 7.88, min: 60.1, hr: 154, maxHr: 171, power: 186, kcal: 665, vo2: 39.5, notes: 'Apple Watch Outdoor Run' },
+      { id: 'r10', date: '2026-10-20', type: 'Easy Run (Zone 2 - No Strides)', km: 8.02, min: 66.1, hr: 142, maxHr: 151, power: 169, kcal: 623, vo2: 39.8, notes: 'Strict Zone 2 (<148 bpm avg, max 151 bpm), skipped strides' }
     ],
     schedule: [
       { day: 'MON', type: 'RR Full Body #1', rx: 'Pairs 1-3 (3x5-8 / 3x8-12) + Core Triplet (2 sets)', dur: '55m | 90s rest' },
@@ -413,6 +412,8 @@
 
     // KPI boxes
     const lastRR = getLatestRR();
+    const sortedRuns = [...state.runLog].sort((a, b) => a.date.localeCompare(b.date));
+    const lastRun = sortedRuns.length ? sortedRuns[sortedRuns.length - 1] : null;
     const totalRunsKm = state.runLog.reduce((acc, r) => acc + Number(r.km || 0), 0);
     const kpiHtml = `
       <div class="stat-box">
@@ -421,9 +422,9 @@
         <div class="stat-sub">-${lostSoFar.toFixed(1)} kg since Sep 3 (${remaining.toFixed(1)} kg to goal)</div>
       </div>
       <div class="stat-box">
-        <div class="stat-label">Daily Energy Target</div>
-        <div class="stat-val">2,400 kcal</div>
-        <div class="stat-sub">TDEE ~${state.meta.tdee} kcal | Protein 160-185g</div>
+        <div class="stat-label">Latest Run (${lastRun ? lastRun.date.slice(5) : '-'})</div>
+        <div class="stat-val">${lastRun ? Number(lastRun.km).toFixed(2) + ' km' : '-'}</div>
+        <div class="stat-sub">${lastRun ? `${lastRun.hr} bpm avg (${lastRun.maxHr || '-'} max) | VO2 ${lastRun.vo2 || 39.8}` : 'No runs'}</div>
       </div>
       <div class="stat-box">
         <div class="stat-label">RR Sessions Logged</div>
@@ -431,9 +432,9 @@
         <div class="stat-sub">Last: ${lastRR ? lastRR.date : 'None'} (Pull ${lastRR ? lastRR.pull_sets : '-'})</div>
       </div>
       <div class="stat-box">
-        <div class="stat-label">Logged Running Vol</div>
+        <div class="stat-label">Total Running Volume</div>
         <div class="stat-val">${totalRunsKm.toFixed(1)} km</div>
-        <div class="stat-sub">${state.runLog.length} runs | Avg 25.3k steps/day</div>
+        <div class="stat-sub">${state.runLog.length} Apple Watch runs | RHR 57 bpm</div>
       </div>
     `;
     document.getElementById('dashboard-kpis').innerHTML = kpiHtml;
@@ -446,7 +447,7 @@
       `START  : ${startW.toFixed(1)} kg (2026-09-03)`,
       `CURRENT: ${curWeight.toFixed(1)} kg ([${barStr}] ${pct.toFixed(1)}%)`,
       `TARGET : ${targetW.toFixed(1)} kg (Est. ~6-8 weeks at -0.8 kg/wk)`,
-      `DEFICIT: ~900 kcal/day (Intake 2,400 vs Burn ~3,390 kcal)`
+      `CARDIO : VO2 Max 39.8 mL/kg/min | RHR 57 bpm | Latest Z2: 8.02 km @ 142 bpm`
     ].join('\n');
     document.getElementById('ascii-progress').textContent = ascii;
 
@@ -730,7 +731,6 @@
           <td><strong>${w.date}</strong></td>
           <td>${Number(w.kg).toFixed(1)} kg</td>
           <td class="muted">${deltaStr} kg</td>
-          <td>${w.kcal ? w.kcal + ' kcal' : '-'}</td>
           <td><button type="button" class="btn-inline" data-del-wt="${w.id}">del</button></td>
         </tr>
       `;
@@ -738,28 +738,89 @@
 
     renderWeightSvg(sortedW);
 
-    // Run Table
-    const sortedR = [...state.runLog].sort((a, b) => b.date.localeCompare(a.date));
+    // Run Table & SVG Chart
+    const sortedRAsc = [...state.runLog].sort((a, b) => a.date.localeCompare(b.date));
+    renderRunSvg(sortedRAsc);
+
+    const sortedR = [...sortedRAsc].reverse();
     const totalKm = sortedR.reduce((a, r) => a + Number(r.km || 0), 0);
-    document.getElementById('run-summary-meta').textContent = `${sortedR.length} runs | ${totalKm.toFixed(1)} km total`;
+    const avgHr = sortedR.length
+      ? Math.round(sortedR.reduce((a, r) => a + Number(r.hr || 0), 0) / sortedR.length)
+      : 0;
+    document.getElementById('run-summary-meta').textContent = `${sortedR.length} runs | ${totalKm.toFixed(2)} km total | Avg HR ${avgHr} bpm`;
 
     const rTbody = document.querySelector('#run-table tbody');
     rTbody.innerHTML = sortedR.map(r => {
       const paceDec = r.km > 0 ? (r.min / r.km) : 0;
       const pMin = Math.floor(paceDec);
       const pSec = Math.round((paceDec - pMin) * 60).toString().padStart(2, '0');
+      const hrDisplay = r.hr ? `${r.hr}${r.maxHr ? ' / ' + r.maxHr : ''} bpm` : '-';
+      const pwrDisplay = r.power ? `${r.power}W` : '-';
+      const vo2Display = r.vo2 ? Number(r.vo2).toFixed(1) : '-';
       return `
         <tr>
           <td><strong>${r.date}</strong></td>
           <td>${r.type}</td>
-          <td>${Number(r.km).toFixed(2)} km</td>
+          <td><strong>${Number(r.km).toFixed(2)} km</strong></td>
           <td>${Number(r.min).toFixed(1)} m</td>
           <td>${pMin}:${pSec}/km</td>
-          <td>${r.hr ? r.hr + ' bpm' : '-'}</td>
+          <td>${hrDisplay}</td>
+          <td class="muted">${pwrDisplay}</td>
+          <td>${vo2Display}</td>
+          <td class="muted">${r.notes || ''}</td>
           <td><button type="button" class="btn-inline" data-del-run="${r.id}">del</button></td>
         </tr>
       `;
     }).join('');
+  }
+
+  function renderRunSvg(sortedR) {
+    const wrap = document.getElementById('run-svg-wrap');
+    if (!wrap) return;
+    if (!sortedR.length) {
+      wrap.innerHTML = '<div class="muted">No runs logged yet.</div>';
+      return;
+    }
+    const W = 620, H = 160, padL = 38, padR = 36, padT = 18, padB = 26;
+    const plotW = W - padL - padR;
+    const plotH = H - padT - padB;
+    const minHr = 135, maxHr = 175;
+    const maxKm = 12;
+
+    const xFor = idx => sortedR.length === 1 ? padL + plotW / 2 : padL + (idx / (sortedR.length - 1)) * plotW;
+    const yForHr = hr => padT + plotH - ((Math.min(maxHr, Math.max(minHr, hr || 150)) - minHr) / (maxHr - minHr)) * plotH;
+    const hForKm = km => (Math.min(maxKm, km || 0) / maxKm) * plotH;
+
+    const z2Y = yForHr(148);
+    const hrPts = sortedR.map((r, i) => `${xFor(i).toFixed(1)},${yForHr(r.hr).toFixed(1)}`).join(' ');
+
+    const barsAndDots = sortedR.map((r, i) => {
+      const cx = xFor(i);
+      const bh = hForKm(r.km);
+      const by = padT + plotH - bh;
+      const hy = yForHr(r.hr);
+      const isZ2 = r.hr && r.hr <= 148;
+      return `
+        <rect x="${(cx - 10).toFixed(1)}" y="${by.toFixed(1)}" width="20" height="${bh.toFixed(1)}" fill="${isZ2 ? '#444' : '#252525'}" stroke="#555" stroke-width="1" />
+        <text x="${cx.toFixed(1)}" y="${(by + 11).toFixed(1)}" text-anchor="middle" font-size="8.5" fill="#aaa">${Number(r.km).toFixed(1)}k</text>
+        <circle cx="${cx.toFixed(1)}" cy="${hy.toFixed(1)}" r="${isZ2 ? 4.5 : 3.5}" fill="currentColor" />
+        <text x="${cx.toFixed(1)}" y="${(hy - 7).toFixed(1)}" text-anchor="middle" font-size="9.5" font-weight="${isZ2 ? '700' : '400'}" fill="currentColor">${r.hr || ''}</text>
+        <text x="${cx.toFixed(1)}" y="${H - 7}" text-anchor="middle" font-size="9" fill="#888">${r.date.slice(5)}</text>
+      `;
+    }).join('');
+
+    wrap.innerHTML = `
+      <svg viewBox="0 0 ${W} ${H}" width="100%" height="160" role="img" aria-label="Running distance and heart rate trend chart">
+        <line x1="${padL}" y1="${yForHr(165)}" x2="${W - padR}" y2="${yForHr(165)}" stroke="#333" stroke-dasharray="2,2"/>
+        <text x="4" y="${yForHr(165) + 3}" font-size="8.5" fill="#888">165 bpm</text>
+        <line x1="${padL}" y1="${z2Y.toFixed(1)}" x2="${W - padR}" y2="${z2Y.toFixed(1)}" stroke="#888" stroke-dasharray="4,3"/>
+        <text x="4" y="${(z2Y + 3).toFixed(1)}" font-size="8.5" fill="currentColor">148 Z2</text>
+        <text x="${W - padR + 4}" y="${padT + 8}" font-size="8.5" fill="#888">Bars: km</text>
+        <text x="${W - padR + 4}" y="${padT + 20}" font-size="8.5" fill="currentColor">Line: HR</text>
+        ${barsAndDots}
+        <polyline fill="none" stroke="currentColor" stroke-width="1.8" points="${hrPts}" />
+      </svg>
+    `;
   }
 
   function renderWeightSvg(sortedW) {
@@ -812,7 +873,7 @@
       '# FIT // WORKOUT & RECOMPOSITION LOG',
       '',
       `- **Current Weight:** ${getLatestWeight().toFixed(1)} kg (Start: 88.0 kg -> Goal: 73.5 kg)`,
-      `- **Daily Energy Target:** ~2,400 kcal (TDEE ~3,390 kcal | 160-185g Protein)`,
+      `- **Cardio Vitals:** VO2 Max 39.8 mL/(kg·min) | Resting HR 57 bpm`,
       '',
       '## Recommended Routine Sessions',
       '',
@@ -823,6 +884,18 @@
     sorted.forEach(s => {
       lines.push(`| ${s.date} | ${s.bw || '-'} | ${s.pull_sets} | ${s.squat_sets} | ${s.dip_sets} | ${s.hinge_sets} | ${s.row_sets} | ${s.push_sets} | ${s.antiext}, ${s.antirot}, ${s.ext} | ${s.notes || ''} |`);
     });
+
+    lines.push('', '## Apple Watch Running Log', '');
+    lines.push('| Date | Type | Distance | Duration | Pace | Avg / Max HR | Power | VO2 Max | Notes |');
+    lines.push('| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |');
+    const sortedR = [...state.runLog].sort((a, b) => b.date.localeCompare(a.date));
+    sortedR.forEach(r => {
+      const paceDec = r.km > 0 ? (r.min / r.km) : 0;
+      const pMin = Math.floor(paceDec);
+      const pSec = Math.round((paceDec - pMin) * 60).toString().padStart(2, '0');
+      lines.push(`| ${r.date} | ${r.type} | ${Number(r.km).toFixed(2)} km | ${Number(r.min).toFixed(1)} m | ${pMin}:${pSec}/km | ${r.hr || '-'}${r.maxHr ? '/' + r.maxHr : ''} bpm | ${r.power ? r.power + 'W' : '-'} | ${r.vo2 || '-'} | ${r.notes || ''} |`);
+    });
+
     return lines.join('\n');
   }
 
@@ -1171,13 +1244,12 @@
     e.preventDefault();
     const date = document.getElementById('wt-date').value;
     const kg = parseFloat(document.getElementById('wt-val').value);
-    const kcal = parseInt(document.getElementById('wt-kcal').value, 10);
     if (!date || isNaN(kg)) return;
     state.weightLog.push({
       id: 'w-' + Date.now(),
       date,
       kg,
-      kcal: !isNaN(kcal) ? kcal : null
+      kcal: null
     });
     document.getElementById('wt-val').value = '';
     saveState('WEIGHT LOGGED');

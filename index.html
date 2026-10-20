@@ -405,7 +405,7 @@ Pair 3: Row Progression (3x8-12)     + Push-Up Progression (3x5-8)
     <section id="view-metrics" class="view-panel" role="tabpanel">
       <div class="tile-grid">
         <!-- Weight Chart & Logger -->
-        <div class="tile tile-focus col-6">
+        <div class="tile tile-focus col-5">
           <div class="tile-header">
             <span>Bodyweight Log &amp; Trend Chart</span>
             <span class="meta">Goal: 73.0 - 74.0 kg</span>
@@ -423,11 +423,7 @@ Pair 3: Row Progression (3x8-12)     + Push-Up Progression (3x5-8)
                   </div>
                   <div class="field">
                     <label for="wt-val">Weight (kg):</label>
-                    <input type="number" id="wt-val" name="kg" step="0.1" inputmode="decimal" required placeholder="79.6">
-                  </div>
-                  <div class="field">
-                    <label for="wt-kcal">Intake (kcal, opt):</label>
-                    <input type="number" id="wt-kcal" name="kcal" step="10" inputmode="numeric" placeholder="2400">
+                    <input type="number" id="wt-val" name="kg" step="0.1" inputmode="decimal" required placeholder="79.0">
                   </div>
                 </div>
                 <div class="btn-row" style="margin-top:8px;">
@@ -443,7 +439,6 @@ Pair 3: Row Progression (3x8-12)     + Push-Up Progression (3x5-8)
                     <th>Date</th>
                     <th>Weight (kg)</th>
                     <th>Delta</th>
-                    <th>Intake</th>
                     <th>Action</th>
                   </tr>
                 </thead>
@@ -454,12 +449,14 @@ Pair 3: Row Progression (3x8-12)     + Push-Up Progression (3x5-8)
         </div>
 
         <!-- Running Log -->
-        <div class="tile col-6">
+        <div class="tile col-7">
           <div class="tile-header">
-            <span>Running Log (Tue Easy / Thu Tempo / Sat Long)</span>
+            <span>Apple Watch Running History &amp; Aerobic Progression</span>
             <span class="meta" id="run-summary-meta"></span>
           </div>
           <div class="tile-body">
+            <div id="run-svg-wrap" style="margin-bottom:10px; border:1px solid var(--border); background:var(--bg); padding:6px;"></div>
+
             <form id="run-form" action="#metrics" method="POST" style="margin-bottom:10px;">
               <fieldset>
                 <legend>Log Run</legend>
@@ -471,6 +468,7 @@ Pair 3: Row Progression (3x8-12)     + Push-Up Progression (3x5-8)
                   <div class="field">
                     <label for="run-type">Run Type:</label>
                     <select id="run-type" name="type">
+                      <option value="Easy Run (Zone 2 - No Strides)">Easy Run (Zone 2 - No Strides)</option>
                       <option value="Easy Run (Z2 + Strides)">Easy Run (Z2 + Strides)</option>
                       <option value="Tempo / Threshold Run">Tempo / Threshold Run</option>
                       <option value="Long Aerobic Run">Long Aerobic Run</option>
@@ -479,19 +477,19 @@ Pair 3: Row Progression (3x8-12)     + Push-Up Progression (3x5-8)
                   </div>
                   <div class="field">
                     <label for="run-km">Distance (km):</label>
-                    <input type="number" id="run-km" name="km" step="0.01" inputmode="decimal" required placeholder="6.00">
+                    <input type="number" id="run-km" name="km" step="0.01" inputmode="decimal" required placeholder="8.02">
                   </div>
                   <div class="field">
                     <label for="run-min">Duration (min):</label>
-                    <input type="number" id="run-min" name="min" step="0.1" inputmode="decimal" required placeholder="36.0">
+                    <input type="number" id="run-min" name="min" step="0.1" inputmode="decimal" required placeholder="66.1">
                   </div>
                   <div class="field">
                     <label for="run-hr">Avg HR (bpm):</label>
-                    <input type="number" id="run-hr" name="hr" inputmode="numeric" placeholder="146">
+                    <input type="number" id="run-hr" name="hr" inputmode="numeric" placeholder="142">
                   </div>
                   <div class="field">
                     <label for="run-notes">Notes:</label>
-                    <input type="text" id="run-notes" name="notes" placeholder="4x20s strides at end">
+                    <input type="text" id="run-notes" name="notes" placeholder="Pure Zone 2, skipped strides">
                   </div>
                 </div>
                 <div class="btn-row" style="margin-top:8px;">
@@ -509,7 +507,10 @@ Pair 3: Row Progression (3x8-12)     + Push-Up Progression (3x5-8)
                     <th>Dist</th>
                     <th>Time</th>
                     <th>Pace</th>
-                    <th>HR</th>
+                    <th>Avg / Max HR</th>
+                    <th>Power</th>
+                    <th>VO2</th>
+                    <th>Notes</th>
                     <th>Del</th>
                   </tr>
                 </thead>
