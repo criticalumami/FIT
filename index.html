@@ -573,7 +573,12 @@ Pair 3: Row Progression (3x8-12)     + Push-Up Progression (3x5-8)
               <fieldset>
                 <legend>Restore / Import State from JSON</legend>
                 <div class="field" style="margin-bottom:8px;">
-                  <label for="import-json-input">Paste JSON state below:</label>
+                  <label for="import-json-file">Load your data.json file:</label>
+                  <input type="file" id="import-json-file" accept="application/json,.json">
+                  <span class="hint">Replaces this browser's data with the file's contents.</span>
+                </div>
+                <div class="field" style="margin-bottom:8px;">
+                  <label for="import-json-input">...or paste JSON below:</label>
                   <textarea id="import-json-input" name="json_state" placeholder='{"rrSessions": [...]}'></textarea>
                 </div>
                 <div class="btn-row">

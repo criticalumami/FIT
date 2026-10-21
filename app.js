@@ -211,7 +211,14 @@
         <div class="stat-sub">Last: ${lastRR ? esc(lastRR.date) : 'None'} (Pull ${lastRR ? esc(lastRR.pull_sets) : '-'})</div>
       </div>
     `;
-    document.getElementById('dashboard-kpis').innerHTML = kpiHtml;
+    const isEmpty = !state.weightLog.length && !state.runLog.length && !state.rrSessions.length;
+    const emptyHtml = isEmpty ? `
+      <div class="stat-box" style="grid-column:1 / -1;">
+        <div class="stat-label">No data in this browser</div>
+        <div class="stat-sub">Your history isn't published with the site. Load your <code>data.json</code> once per browser:
+          <button type="button" class="btn-inline" data-goto-tab="sync">6:sync -&gt; Load file</button></div>
+      </div>` : '';
+    document.getElementById('dashboard-kpis').innerHTML = emptyHtml + kpiHtml;
 
     // ASCII Progress Bar
     const barWidth = 28;
@@ -1150,6 +1157,19 @@
     } catch (err) {
       showToast('INVALID JSON');
     }
+  });
+
+  document.getElementById('import-json-file').addEventListener('change', async e => {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    try {
+      state = withDefaults(JSON.parse(await file.text()));
+      saveState(`IMPORTED ${file.name}`);
+      switchTab('status');
+    } catch (err) {
+      showToast('INVALID JSON FILE');
+    }
+    e.target.value = '';
   });
 
   document.getElementById('btn-factory-reset').addEventListener('click', () => {
