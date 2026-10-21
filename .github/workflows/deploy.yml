@@ -51,6 +51,15 @@ jobs:
           mkdir -p _site
           cp index.html style.css app.js lib.js program.js .nojekyll _site/
           cp generated/rr_complete_form_guide.html _site/form-guide.html
+          # Cache-bust assets and stamp the build id; open tabs compare it and reload when stale.
+          V="${GITHUB_SHA::7}"
+          sed -i -E \
+            -e "s/(name=\"app-version\" content=)\"dev\"/\1\"$V\"/" \
+            -e "s/(src|href)=\"(app|lib|program)\.js\"/\1=\"\2.js?v=$V\"/g" \
+            -e "s/href=\"style\.css\"/href=\"style.css?v=$V\"/" \
+            _site/index.html
+          grep -q "content=\"$V\"" _site/index.html
+          test "$(grep -c "?v=$V" _site/index.html)" -eq 4
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

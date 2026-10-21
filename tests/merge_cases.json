@@ -1,62 +1,301 @@
 [
   {
     "name": "union of entries logged on different devices",
-    "local":  {"weightLog": [{"id": "w1", "date": "2026-10-01", "kg": 80}], "runLog": [], "rrSessions": []},
-    "remote": {"weightLog": [{"id": "w2", "date": "2026-10-02", "kg": 79.8}], "runLog": [{"id": "r1", "date": "2026-10-02", "km": 5}], "rrSessions": []},
-    "expect": {"weightLog": ["w1", "w2"], "runLog": ["r1"], "rrSessions": []}
+    "local": {
+      "weightLog": [
+        {
+          "id": "w1",
+          "date": "2026-10-01",
+          "kg": 80
+        }
+      ],
+      "runLog": [],
+      "rrSessions": []
+    },
+    "remote": {
+      "weightLog": [
+        {
+          "id": "w2",
+          "date": "2026-10-02",
+          "kg": 79.8
+        }
+      ],
+      "runLog": [
+        {
+          "id": "r1",
+          "date": "2026-10-02",
+          "km": 5
+        }
+      ],
+      "rrSessions": []
+    },
+    "expect": {
+      "weightLog": [
+        "w1",
+        "w2"
+      ],
+      "runLog": [
+        "r1"
+      ],
+      "rrSessions": []
+    }
   },
   {
     "name": "same entry edited: later updatedAt wins, missing stamp loses",
-    "local":  {"rrSessions": [{"id": "s1", "date": "2026-10-19", "pull_sets": "4,4,4"}, {"id": "s2", "date": "2026-10-21", "pull_sets": "5,4,4", "updatedAt": "2026-10-21T10:00:00.000Z"}]},
-    "remote": {"rrSessions": [{"id": "s1", "date": "2026-10-19", "pull_sets": "4,4,5", "updatedAt": "2026-10-20T08:00:00.000Z"}, {"id": "s2", "date": "2026-10-21", "pull_sets": "6,4,4", "updatedAt": "2026-10-21T09:00:00.000Z"}]},
-    "expect": {"rrSessions": ["s1", "s2"]},
-    "expectValues": {"rrSessions.s1.pull_sets": "4,4,5", "rrSessions.s2.pull_sets": "5,4,4"}
+    "local": {
+      "rrSessions": [
+        {
+          "id": "s1",
+          "date": "2026-10-19",
+          "pull_sets": "4,4,4"
+        },
+        {
+          "id": "s2",
+          "date": "2026-10-21",
+          "pull_sets": "5,4,4",
+          "updatedAt": "2026-10-21T10:00:00.000Z"
+        }
+      ]
+    },
+    "remote": {
+      "rrSessions": [
+        {
+          "id": "s1",
+          "date": "2026-10-19",
+          "pull_sets": "4,4,5",
+          "updatedAt": "2026-10-20T08:00:00.000Z"
+        },
+        {
+          "id": "s2",
+          "date": "2026-10-21",
+          "pull_sets": "6,4,4",
+          "updatedAt": "2026-10-21T09:00:00.000Z"
+        }
+      ]
+    },
+    "expect": {
+      "rrSessions": [
+        "s1",
+        "s2"
+      ]
+    },
+    "expectValues": {
+      "rrSessions.s1.pull_sets": "4,4,5",
+      "rrSessions.s2.pull_sets": "5,4,4"
+    }
   },
   {
     "name": "tie with no stamps keeps local",
-    "local":  {"runLog": [{"id": "r1", "date": "2026-10-20", "km": 8.02}]},
-    "remote": {"runLog": [{"id": "r1", "date": "2026-10-20", "km": 8.0}]},
-    "expect": {"runLog": ["r1"]},
-    "expectValues": {"runLog.r1.km": 8.02}
+    "local": {
+      "runLog": [
+        {
+          "id": "r1",
+          "date": "2026-10-20",
+          "km": 8.02
+        }
+      ]
+    },
+    "remote": {
+      "runLog": [
+        {
+          "id": "r1",
+          "date": "2026-10-20",
+          "km": 8.0
+        }
+      ]
+    },
+    "expect": {
+      "runLog": [
+        "r1"
+      ]
+    },
+    "expectValues": {
+      "runLog.r1.km": 8.02
+    }
   },
   {
     "name": "deletion on one device removes the entry everywhere",
-    "local":  {"weightLog": [{"id": "w2", "date": "2026-10-02", "kg": 79}], "deleted": {"w1": "2026-10-05T00:00:00.000Z"}},
-    "remote": {"weightLog": [{"id": "w1", "date": "2026-10-01", "kg": 80}, {"id": "w2", "date": "2026-10-02", "kg": 79}]},
-    "expect": {"weightLog": ["w2"]},
-    "expectDeleted": ["w1"]
+    "local": {
+      "weightLog": [
+        {
+          "id": "w2",
+          "date": "2026-10-02",
+          "kg": 79
+        }
+      ],
+      "deleted": {
+        "w1": "2026-10-05T00:00:00.000Z"
+      }
+    },
+    "remote": {
+      "weightLog": [
+        {
+          "id": "w1",
+          "date": "2026-10-01",
+          "kg": 80
+        },
+        {
+          "id": "w2",
+          "date": "2026-10-02",
+          "kg": 79
+        }
+      ]
+    },
+    "expect": {
+      "weightLog": [
+        "w2"
+      ]
+    },
+    "expectDeleted": [
+      "w1"
+    ]
   },
   {
     "name": "entry edited after it was deleted survives",
-    "local":  {"runLog": [], "deleted": {"r1": "2026-10-05T00:00:00.000Z"}},
-    "remote": {"runLog": [{"id": "r1", "date": "2026-10-01", "km": 5, "updatedAt": "2026-10-06T00:00:00.000Z"}]},
-    "expect": {"runLog": ["r1"]}
+    "local": {
+      "runLog": [],
+      "deleted": {
+        "r1": "2026-10-05T00:00:00.000Z"
+      }
+    },
+    "remote": {
+      "runLog": [
+        {
+          "id": "r1",
+          "date": "2026-10-01",
+          "km": 5,
+          "updatedAt": "2026-10-06T00:00:00.000Z"
+        }
+      ]
+    },
+    "expect": {
+      "runLog": [
+        "r1"
+      ]
+    }
   },
   {
     "name": "tombstones from both sides are kept",
-    "local":  {"deleted": {"a": "2026-10-01T00:00:00.000Z"}},
-    "remote": {"deleted": {"b": "2026-10-02T00:00:00.000Z"}},
+    "local": {
+      "deleted": {
+        "a": "2026-10-01T00:00:00.000Z"
+      }
+    },
+    "remote": {
+      "deleted": {
+        "b": "2026-10-02T00:00:00.000Z"
+      }
+    },
     "expect": {},
-    "expectDeleted": ["a", "b"]
+    "expectDeleted": [
+      "a",
+      "b"
+    ]
   },
   {
     "name": "settings come from the side changed most recently",
-    "local":  {"meta": {"targetWeight": 73.5}, "settingsUpdatedAt": "2026-10-20T00:00:00.000Z", "weightLog": [{"id": "w1", "date": "2026-10-01", "kg": 80}]},
-    "remote": {"meta": {"targetWeight": 75}, "settingsUpdatedAt": "2026-10-21T00:00:00.000Z", "weightLog": []},
-    "expect": {"weightLog": ["w1"]},
-    "expectValues": {"meta.targetWeight": 75}
+    "local": {
+      "meta": {
+        "targetWeight": 73.5
+      },
+      "settingsUpdatedAt": "2026-10-20T00:00:00.000Z",
+      "weightLog": [
+        {
+          "id": "w1",
+          "date": "2026-10-01",
+          "kg": 80
+        }
+      ]
+    },
+    "remote": {
+      "meta": {
+        "targetWeight": 75
+      },
+      "settingsUpdatedAt": "2026-10-21T00:00:00.000Z",
+      "weightLog": []
+    },
+    "expect": {
+      "weightLog": [
+        "w1"
+      ]
+    },
+    "expectValues": {
+      "meta.targetWeight": 75
+    }
   },
   {
     "name": "settings tie keeps local",
-    "local":  {"meta": {"targetWeight": 73.5}},
-    "remote": {"meta": {"targetWeight": 75}},
+    "local": {
+      "meta": {
+        "targetWeight": 73.5
+      }
+    },
+    "remote": {
+      "meta": {
+        "targetWeight": 75
+      }
+    },
     "expect": {},
-    "expectValues": {"meta.targetWeight": 73.5}
+    "expectValues": {
+      "meta.targetWeight": 73.5
+    }
   },
   {
     "name": "no remote yet: local copied as-is",
-    "local":  {"weightLog": [{"id": "w1", "date": "2026-10-01", "kg": 80}]},
+    "local": {
+      "weightLog": [
+        {
+          "id": "w1",
+          "date": "2026-10-01",
+          "kg": 80
+        }
+      ]
+    },
     "remote": null,
-    "expect": {"weightLog": ["w1"]}
+    "expect": {
+      "weightLog": [
+        "w1"
+      ]
+    }
+  },
+  {
+    "name": "empty browser never wins a settings tie",
+    "local": {
+      "meta": {
+        "startWeight": null,
+        "targetWeight": null
+      },
+      "activeProgressions": {
+        "squat": "L1: Assisted Squat"
+      },
+      "weightLog": [],
+      "runLog": [],
+      "rrSessions": []
+    },
+    "remote": {
+      "meta": {
+        "startWeight": 85,
+        "targetWeight": 73.5
+      },
+      "activeProgressions": {
+        "squat": "L3: Single-Leg Sofa Step-Up (No Back-Leg Push)"
+      },
+      "weightLog": [
+        {
+          "id": "w1",
+          "date": "2026-09-03",
+          "kg": 85
+        }
+      ]
+    },
+    "expect": {
+      "weightLog": [
+        "w1"
+      ]
+    },
+    "expectValues": {
+      "meta.startWeight": 85,
+      "activeProgressions.squat": "L3: Single-Leg Sofa Step-Up (No Back-Leg Push)"
+    }
   }
 ]

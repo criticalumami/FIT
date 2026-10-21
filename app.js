@@ -1441,9 +1441,27 @@
     }
   });
 
+  // A tab left open across a deploy must not keep running old code (old builds
+  // could overwrite synced data). Compare our build id with the live one and reload.
+  const APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).content || 'dev';
+  async function reloadIfStale() {
+    if (APP_VERSION === 'dev' || !/^https?:$/.test(location.protocol)) return false;
+    try {
+      const res = await fetch(location.pathname + '?v=' + Date.now(), { cache: 'no-store' });
+      const live = (await res.text()).match(/name="app-version" content="([^"]+)"/);
+      if (live && live[1] !== APP_VERSION) {
+        location.reload();
+        return true;
+      }
+    } catch (e) {}
+    return false;
+  }
+
   // Pick up changes from other devices when returning to the tab/app.
-  document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'visible') scheduleSync(0);
+  document.addEventListener('visibilitychange', async () => {
+    if (document.visibilityState !== 'visible') return;
+    if (await reloadIfStale()) return;
+    scheduleSync(0);
   });
 
   // Keyboard shortcuts (1-6 tabs, t theme, space timer) when not in input/textarea

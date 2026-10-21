@@ -496,7 +496,12 @@ def merge_states(local, remote):
     def newer(a, b):
         return str(b or "") > str(a or "")
 
-    base = remote if newer(local.get("settingsUpdatedAt"), remote.get("settingsUpdatedAt")) else local
+    def count(s):
+        return sum(len(s.get(k) or []) for k in LOG_KEYS)
+
+    lt, rt = str(local.get("settingsUpdatedAt") or ""), str(remote.get("settingsUpdatedAt") or "")
+    # Later settings win; on a tie, a side with no log entries (fresh/empty browser) never wins.
+    base = remote if rt > lt or (rt == lt and count(local) == 0 and count(remote) > 0) else local
     out = copy.deepcopy(base)
     deleted = {**(remote.get("deleted") or {}), **(local.get("deleted") or {})}
     for i, t in (remote.get("deleted") or {}).items():

@@ -192,7 +192,8 @@
    * - `deleted` holds tombstones { id: isoTime } so deletions propagate
    *   instead of being resurrected by the other side.
    * - Everything else (meta, progressions, notes, schedule...) comes from the
-   *   side with the later settingsUpdatedAt; ties go to `local`.
+   *   side with the later settingsUpdatedAt; ties go to `local`, unless local
+   *   has no entries at all and remote does (an empty browser never wins).
    */
   const LOG_KEYS = ['rrSessions', 'weightLog', 'runLog'];
 
@@ -210,7 +211,10 @@
     if (!remote) return JSON.parse(JSON.stringify(local));
     if (!local) return JSON.parse(JSON.stringify(remote));
     const newer = (a, b) => String(b || '') > String(a || '');
-    const base = newer(local.settingsUpdatedAt, remote.settingsUpdatedAt) ? remote : local;
+    const count = s => LOG_KEYS.reduce((n, k) => n + (s[k] || []).length, 0);
+    const lt = String(local.settingsUpdatedAt || ''), rt = String(remote.settingsUpdatedAt || '');
+    // Later settings win; on a tie, a side with no log entries (fresh/empty browser) never wins.
+    const base = rt > lt || (rt === lt && count(local) === 0 && count(remote) > 0) ? remote : local;
     const out = JSON.parse(JSON.stringify(base));
 
     const deleted = Object.assign({}, remote.deleted || {}, local.deleted || {});
