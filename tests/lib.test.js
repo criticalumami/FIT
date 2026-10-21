@@ -105,3 +105,38 @@ test('pace never prints :60', () => {
   assert.equal(L.pace(1, 6.999), '7:00');
   assert.equal(L.pace(0, 10), '-');
 });
+
+// Shared with tests/test_fit.py so lib.js and fit.py merge identically.
+const MERGE_CASES = require('./merge_cases.json');
+
+function lookup(state, path) {
+  const [key, id, field] = path.split('.');
+  if (field === undefined) return state[key][id];
+  return state[key].find(e => e.id === id)[field];
+}
+
+for (const c of MERGE_CASES) {
+  test(`mergeStates: ${c.name}`, () => {
+    const out = L.mergeStates(c.local, c.remote);
+    for (const [key, ids] of Object.entries(c.expect)) {
+      assert.deepEqual(out[key].map(e => e.id), ids, key);
+    }
+    for (const [path, val] of Object.entries(c.expectValues || {})) {
+      assert.equal(lookup(out, path), val, path);
+    }
+    if (c.expectDeleted) assert.deepEqual(Object.keys(out.deleted || {}).sort(), c.expectDeleted);
+  });
+}
+
+test('mergeStates is idempotent and does not mutate inputs', () => {
+  const c = MERGE_CASES[1];
+  const before = JSON.stringify(c);
+  const once = L.mergeStates(c.local, c.remote);
+  assert.equal(L.stableStringify(L.mergeStates(once, c.remote)), L.stableStringify(once));
+  assert.equal(L.stableStringify(L.mergeStates(c.remote, once)), L.stableStringify(once));
+  assert.equal(JSON.stringify(c), before);
+});
+
+test('stableStringify ignores key order', () => {
+  assert.equal(L.stableStringify({ b: 1, a: [{ y: 2, x: 1 }] }), L.stableStringify({ a: [{ x: 1, y: 2 }], b: 1 }));
+});

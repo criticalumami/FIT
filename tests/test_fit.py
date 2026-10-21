@@ -80,9 +80,9 @@ class FitTests(unittest.TestCase):
             old = fit.DATA_PATH
             fit.DATA_PATH = path
             try:
-                fit.main(["log-weight", "2026-01-19", "88.9"])
-                fit.main(["log-rr", "pull=6,5,4", "squat=5,5,5 (/leg)", "--date", "2026-01-19"])
-                fit.main(["log-rr", "pull=6,5,5", "--date", "2026-01-19"])  # same day replaces
+                fit.main(["log-weight", "2026-01-19", "88.9", "--offline"])
+                fit.main(["log-rr", "pull=6,5,4", "squat=5,5,5 (/leg)", "--date", "2026-01-19", "--offline"])
+                fit.main(["log-rr", "pull=6,5,5", "--date", "2026-01-19", "--offline"])  # same day replaces
             finally:
                 fit.DATA_PATH = old
             if before is not None:
@@ -95,6 +95,28 @@ class FitTests(unittest.TestCase):
             self.assertEqual(same_day[0]["pull_sets"], "6,5,5")
             self.assertEqual(same_day[0]["bw"], 88.9)
             self.assertTrue(same_day[0]["pull_prog"].startswith("L3"))
+            self.assertTrue(same_day[0]["updatedAt"].endswith("Z"))
+
+    def test_merge_cases_match_lib_js(self):
+        cases_path = os.path.join(os.path.dirname(__file__), "merge_cases.json")
+        with open(cases_path) as f:
+            cases = json.load(f)
+        for c in cases:
+            with self.subTest(c["name"]):
+                out = fit.merge_states(c["local"], c["remote"])
+                for key, ids in c["expect"].items():
+                    self.assertEqual([e["id"] for e in out[key]], ids)
+                for path, val in (c.get("expectValues") or {}).items():
+                    parts = path.split(".")
+                    got = out[parts[0]][parts[1]] if len(parts) == 2 else \
+                        next(e for e in out[parts[0]] if e["id"] == parts[1])[parts[2]]
+                    self.assertEqual(got, val)
+                if "expectDeleted" in c:
+                    self.assertEqual(sorted(out.get("deleted", {})), c["expectDeleted"])
+
+    def test_now_iso_matches_js_format(self):
+        import re
+        self.assertRegex(fit.now_iso(), r"^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d\.\d{3}Z$")
 
 
 if __name__ == "__main__":

@@ -41,6 +41,7 @@
       </div>
       <div class="status-seg">
         <span id="toast-status" role="status" aria-live="polite"></span>
+        <button type="button" class="btn-inline" id="bar-sync" data-goto-tab="sync" title="Sync status">sync:off</button>
         <button type="button" class="btn-inline" id="theme-toggle" title="Toggle Color Scheme / Follow System (Shortcut: t)">inv:auto</button>
       </div>
     </div>
@@ -597,7 +598,7 @@ Pair 3: Row Progression (3x8-12)     + Push-Up Progression (3x5-8)
           </div>
           <div class="tile-body">
             <p>Push <code>data.json</code> &amp; <code>WORKOUT_LOG.md</code> to a <strong>private</strong> GitHub repo (e.g. <code>you/FIT-data</code>). Sync refuses public repos, because this data is personal. Do not use the app's own public repo.</p>
-            <p class="hint">Use a fine-grained token limited to that one repo, "Contents: Read and write" only, with an expiry date. The token is kept for this browser tab only.</p>
+            <p class="hint">Use a fine-grained token limited to that one repo, "Contents: Read and write" only, with an expiry date. Unless you tick "Remember", it is kept for this tab only.</p>
             <form id="gh-sync-form" action="#sync" method="POST">
               <fieldset>
                 <legend>GitHub API Credentials</legend>
@@ -614,11 +615,16 @@ Pair 3: Row Progression (3x8-12)     + Push-Up Progression (3x5-8)
                 <div class="field" style="margin-top:8px;">
                   <label for="gh-token">GitHub Personal Access Token (Contents Read/Write):</label>
                   <input type="password" id="gh-token" name="token" autocomplete="off" placeholder="github_pat_...">
-                  <span class="hint">Never leaves your device except to authenticate with api.github.com.</span>
+                  <span class="hint">Only ever sent to api.github.com.</span>
+                </div>
+                <div class="field" style="margin-top:8px;">
+                  <label><input type="checkbox" id="gh-remember"> Remember on this device and sync automatically</label>
+                  <span class="hint">Syncs when the app opens, when you come back to it, and a few seconds after every change. Changes from different devices are merged. Only tick this on your own devices.</span>
                 </div>
                 <div class="btn-row" style="margin-top:10px;">
-                  <button type="submit">Push State to GitHub</button>
-                  <button type="button" class="btn-secondary" id="btn-gh-pull">Pull Latest from GitHub</button>
+                  <button type="submit">Sync Now</button>
+                  <button type="button" class="btn-secondary" id="btn-gh-pull">Replace Local with GitHub Copy</button>
+                  <button type="button" class="btn-secondary" id="btn-gh-forget">Forget Token</button>
                 </div>
                 <p id="gh-sync-status" class="muted" style="margin-top:8px;" aria-live="polite"></p>
               </fieldset>

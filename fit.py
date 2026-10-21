@@ -11,8 +11,9 @@ truth; program.js holds the generic exercise ladders and default schedule.
   python3 fit.py log-weight 2026-10-21 78.6
   python3 fit.py log-run 2026-10-22 "Tempo / Threshold Run" 8.5 58.0 --hr 160
   python3 fit.py log-rr pull=5,4,4 squat="5,5,5 (/leg)" dip=6,5,5 --notes "felt good"
-  python3 fit.py pull                     # fetch data.json from the private data repo (uses `gh`)
-  python3 fit.py push                     # upload data.json + WORKOUT_LOG.md to the private data repo
+  python3 fit.py sync                     # merge data.json with the private data repo both ways (uses `gh`)
+  python3 fit.py pull                     # recovery: REPLACE data.json with the repo copy
+  (log-* commands sync automatically before and after; add --offline to skip)
 """
 import argparse
 import csv
@@ -316,24 +317,35 @@ def cmd_generate(args):
         push_apple_calendar(events, events[0][0] if events else start)
 
 
+def new_id(prefix):
+    return f"{prefix}-{int(datetime.now(timezone.utc).timestamp() * 1000)}"
+
+
 def cmd_log_weight(args):
+    auto_sync(args, "before")
     data = load_data()
-    data.setdefault("weightLog", []).append({"id": f"w-{args.date}-{len(data['weightLog'])}", "date": args.date, "kg": args.kg, "kcal": None})
+    data.setdefault("weightLog", []).append(
+        {"id": new_id("w"), "date": args.date, "kg": args.kg, "kcal": None, "updatedAt": now_iso()})
     save_data(data)
     print(f"logged {args.kg} kg on {args.date}")
+    auto_sync(args, "after")
 
 
 def cmd_log_run(args):
+    auto_sync(args, "before")
     data = load_data()
     data.setdefault("runLog", []).append({
-        "id": f"r-{args.date}-{len(data['runLog'])}", "date": args.date, "type": args.type,
+        "id": new_id("r"), "date": args.date, "type": args.type,
         "km": args.km, "min": args.min, "hr": args.hr, "maxHr": args.max_hr, "notes": args.notes or "",
+        "updatedAt": now_iso(),
     })
     save_data(data)
     print(f"logged {args.km} km run on {args.date}")
+    auto_sync(args, "after")
 
 
 def cmd_log_rr(args):
+    auto_sync(args, "before")
     data = load_data()
     active = data.get("activeProgressions", {})
     weights = sorted(data.get("weightLog", []), key=lambda w: w["date"])
@@ -348,10 +360,12 @@ def cmd_log_rr(args):
     for k in ("antiext", "antirot", "ext"):
         entry[k] = sets.get(k, "")
     entry["notes"] = args.notes or ""
+    entry["updatedAt"] = now_iso()
     data.setdefault("rrSessions", [])
     data["rrSessions"] = [s for s in data["rrSessions"] if s.get("id") != entry["id"]] + [entry]
     save_data(data)
     print(f"logged RR session {args.date}")
+    auto_sync(args, "after")
 
 
 # Apple Health export ------------------------------------------------------
@@ -460,12 +474,59 @@ def health_summary_txt(h):
     return "\n".join(out) + "\n"
 
 
-# Private data repo sync (same files the web app's GitHub sync uses) -----------
+# Private data repo sync (same repo and merge rules as the web app) ----------
+
+LOG_KEYS = ("rrSessions", "weightLog", "runLog")
+
+
+def now_iso():
+    """Same format as JS new Date().toISOString(), so timestamps compare as strings."""
+    t = datetime.now(timezone.utc)
+    return t.strftime("%Y-%m-%dT%H:%M:%S.") + f"{t.microsecond // 1000:03d}Z"
+
+
+def merge_states(local, remote):
+    """Mirror of lib.js mergeStates(); keep the two identical (tests/fixtures check both)."""
+    import copy
+    if remote is None:
+        return copy.deepcopy(local)
+    if local is None:
+        return copy.deepcopy(remote)
+
+    def newer(a, b):
+        return str(b or "") > str(a or "")
+
+    base = remote if newer(local.get("settingsUpdatedAt"), remote.get("settingsUpdatedAt")) else local
+    out = copy.deepcopy(base)
+    deleted = {**(remote.get("deleted") or {}), **(local.get("deleted") or {})}
+    for i, t in (remote.get("deleted") or {}).items():
+        if newer(deleted[i], t):
+            deleted[i] = t
+    out["deleted"] = deleted
+    for key in LOG_KEYS:
+        by_id = {}
+        for e in local.get(key) or []:
+            by_id[e["id"]] = e
+        for e in remote.get(key) or []:
+            cur = by_id.get(e["id"])
+            if cur is None or newer(cur.get("updatedAt"), e.get("updatedAt")):
+                by_id[e["id"]] = e
+        kept = [copy.deepcopy(e) for e in by_id.values()
+                if e["id"] not in deleted or newer(deleted[e["id"]], e.get("updatedAt"))]
+        out[key] = sorted(kept, key=lambda e: (str(e.get("date")), str(e.get("id"))))
+    return out
+
+
+def stable(obj):
+    return json.dumps(obj, sort_keys=True, ensure_ascii=False, separators=(",", ":"))
+
 
 def gh_api(*args, input_text=None):
     res = subprocess.run(["gh", "api", *args], input=input_text, capture_output=True, text=True)
     if res.returncode != 0:
-        raise RuntimeError(res.stderr.strip() or res.stdout.strip())
+        err = RuntimeError(res.stderr.strip() or res.stdout.strip())
+        err.conflict = "409" in err.args[0] or "422" in err.args[0]
+        raise err
     return res.stdout
 
 
@@ -474,33 +535,77 @@ def assert_private(repo):
         sys.exit(f"Refusing to sync: {repo} is not private.")
 
 
-def cmd_pull(args):
-    assert_private(args.repo)
-    remote = json.loads(gh_api(f"repos/{args.repo}/contents/data.json", "-H", "Accept: application/vnd.github.raw+json"))
-    if os.path.exists(DATA_PATH):
-        shutil.copy(DATA_PATH, DATA_PATH + ".bak")
-    save_data(remote)
-    print(f"pulled data.json from {args.repo} (previous copy saved as data.json.bak)")
-
-
-def upsert(repo, path, text, message):
+def get_remote(repo, path):
+    """Returns (text, sha), or (None, None) if the file doesn't exist."""
     import base64
     try:
-        sha = json.loads(gh_api(f"repos/{repo}/contents/{path}"))["sha"]
-    except RuntimeError:
-        sha = None
+        meta = json.loads(gh_api(f"repos/{repo}/contents/{path}"))
+    except RuntimeError as e:
+        if "404" in str(e) or "Not Found" in str(e):
+            return None, None
+        raise
+    return base64.b64decode(meta["content"]).decode("utf-8"), meta["sha"]
+
+
+def put_remote(repo, path, text, sha, message):
+    import base64
     body = {"message": message, "content": base64.b64encode(text.encode("utf-8")).decode("ascii")}
     if sha:
         body["sha"] = sha
     gh_api("-X", "PUT", f"repos/{repo}/contents/{path}", "--input", "-", input_text=json.dumps(body))
 
 
-def cmd_push(args):
+def sync(repo, quiet=False):
+    """Merge local data.json with the repo copy both ways. Returns True on success."""
+    assert_private(repo)
+    for attempt in range(3):
+        text, sha = get_remote(repo, "data.json")
+        remote = json.loads(text) if text else None
+        local = load_data() if os.path.exists(DATA_PATH) else None
+        merged = merge_states(local, remote)
+        if local is None or stable(merged) != stable(local):
+            save_data(merged)
+        if remote is not None and stable(merged) == stable(remote):
+            break
+        try:
+            put_remote(repo, "data.json", json.dumps(merged, indent=2, ensure_ascii=False) + "\n", sha, "Sync from fit.py")
+        except RuntimeError as e:
+            if getattr(e, "conflict", False) and attempt < 2:
+                continue  # someone pushed in between: re-read and merge again
+            raise
+        _, log_sha = get_remote(repo, "WORKOUT_LOG.md")
+        put_remote(repo, "WORKOUT_LOG.md", workout_log_md(merged), log_sha, "Sync WORKOUT_LOG.md from fit.py")
+        break
+    if not quiet:
+        print(f"in sync with {repo}")
+    return True
+
+
+def auto_sync(args, when):
+    """Best-effort sync around log-* commands; never blocks logging when offline."""
+    if getattr(args, "offline", False) or shutil.which("gh") is None:
+        return
+    try:
+        sync(args.repo, quiet=True)
+    except (RuntimeError, OSError) as e:
+        print(f"warning: sync {when} logging failed ({str(e).splitlines()[0][:120]}); run `python3 fit.py sync` later",
+              file=sys.stderr)
+
+
+def cmd_sync(args):
+    sync(args.repo)
+
+
+def cmd_pull(args):
+    """Replace local data.json with the repo copy (recovery). Normal use: `sync`."""
     assert_private(args.repo)
-    data = load_data()
-    upsert(args.repo, "data.json", json.dumps(data, indent=2, ensure_ascii=False) + "\n", "Sync data.json from fit.py")
-    upsert(args.repo, "WORKOUT_LOG.md", workout_log_md(data), "Sync WORKOUT_LOG.md from fit.py")
-    print(f"pushed data.json and WORKOUT_LOG.md to {args.repo}")
+    text, _ = get_remote(args.repo, "data.json")
+    if text is None:
+        sys.exit(f"{args.repo} has no data.json")
+    if os.path.exists(DATA_PATH):
+        shutil.copy(DATA_PATH, DATA_PATH + ".bak")
+    save_data(json.loads(text))
+    print(f"replaced data.json with {args.repo}'s copy (previous copy saved as data.json.bak)")
 
 
 def cmd_health(args):
@@ -547,11 +652,16 @@ def main(argv=None):
     rr.add_argument("--notes")
     rr.set_defaults(func=cmd_log_rr)
 
-    for name, func, text in (("pull", cmd_pull, "replace data.json with the private repo's copy"),
-                             ("push", cmd_push, "upload data.json to the private repo")):
+    for name, func, text in (("sync", cmd_sync, "merge data.json with the private repo, both ways"),
+                             ("push", cmd_sync, "same as sync (kept for old habits)"),
+                             ("pull", cmd_pull, "REPLACE data.json with the repo copy (recovery only)")):
         sp = sub.add_parser(name, help=text)
         sp.add_argument("--repo", default=DATA_REPO, help="private data repo (env FIT_DATA_REPO)")
         sp.set_defaults(func=func)
+
+    for sp in (w, r, rr):
+        sp.add_argument("--repo", default=DATA_REPO, help="private data repo (env FIT_DATA_REPO)")
+        sp.add_argument("--offline", action="store_true", help="don't auto-sync with the private repo")
 
     args = ap.parse_args(argv)
     args.func(args)

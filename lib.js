@@ -185,7 +185,59 @@
     return `${m}:${String(s).padStart(2, '0')}`;
   }
 
+  /*
+   * Sync merge (mirrored by merge_states() in fit.py; keep them identical).
+   * - Log arrays are unioned by id. Same id on both sides: the later updatedAt
+   *   wins; ties/missing go to `local`.
+   * - `deleted` holds tombstones { id: isoTime } so deletions propagate
+   *   instead of being resurrected by the other side.
+   * - Everything else (meta, progressions, notes, schedule...) comes from the
+   *   side with the later settingsUpdatedAt; ties go to `local`.
+   */
+  const LOG_KEYS = ['rrSessions', 'weightLog', 'runLog'];
+
+  // JSON with sorted keys, for "did anything actually change?" comparisons.
+  function stableStringify(v) {
+    if (Array.isArray(v)) return '[' + v.map(stableStringify).join(',') + ']';
+    if (v && typeof v === 'object') {
+      return '{' + Object.keys(v).sort().filter(k => v[k] !== undefined)
+        .map(k => JSON.stringify(k) + ':' + stableStringify(v[k])).join(',') + '}';
+    }
+    return JSON.stringify(v === undefined ? null : v);
+  }
+
+  function mergeStates(local, remote) {
+    if (!remote) return JSON.parse(JSON.stringify(local));
+    if (!local) return JSON.parse(JSON.stringify(remote));
+    const newer = (a, b) => String(b || '') > String(a || '');
+    const base = newer(local.settingsUpdatedAt, remote.settingsUpdatedAt) ? remote : local;
+    const out = JSON.parse(JSON.stringify(base));
+
+    const deleted = Object.assign({}, remote.deleted || {}, local.deleted || {});
+    Object.keys(remote.deleted || {}).forEach(id => {
+      if (newer(deleted[id], remote.deleted[id])) deleted[id] = remote.deleted[id];
+    });
+    out.deleted = deleted;
+
+    LOG_KEYS.forEach(key => {
+      const byId = new Map();
+      (local[key] || []).forEach(e => byId.set(e.id, e));
+      (remote[key] || []).forEach(e => {
+        const cur = byId.get(e.id);
+        if (!cur || newer(cur.updatedAt, e.updatedAt)) byId.set(e.id, e);
+      });
+      out[key] = [...byId.values()]
+        .filter(e => !(e.id in deleted) || newer(deleted[e.id], e.updatedAt))
+        .map(e => JSON.parse(JSON.stringify(e)))
+        .sort((a, b) => String(a.date).localeCompare(String(b.date)) || String(a.id).localeCompare(String(b.id)));
+    });
+    return out;
+  }
+
   return {
+    mergeStates,
+    stableStringify,
+    LOG_KEYS,
     escapeHtml,
     parseSets,
     computeNextSets,

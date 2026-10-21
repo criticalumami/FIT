@@ -12,6 +12,8 @@
   const STORAGE_KEY = 'fit_suckless_state_v3';
   const GH_TOKEN_KEY = 'fit_suckless_gh_token';
   const GH_REPO_KEY = 'fit_suckless_gh_repo';
+  // Opt-in "remember on this device" token for automatic sync (fine-grained, one private repo).
+  const GH_REMEMBER_KEY = 'fit_sync_token_v2';
 
   const L = window.FITLib;
   const esc = L.escapeHtml;
@@ -37,7 +39,9 @@
     weightLog: [],
     runLog: [],
     schedule: PROGRAM.defaultSchedule,
-    programNotes: PROGRAM.defaultProgramNotes
+    programNotes: PROGRAM.defaultProgramNotes,
+    deleted: {},
+    settingsUpdatedAt: null
   };
 
   function clone(x) {
@@ -73,15 +77,54 @@
       const res = await fetch('data.json', { cache: 'no-store' });
       if (!res.ok) return;
       state = withDefaults(await res.json());
-      saveState('LOADED LOCAL data.json');
+      saveState('LOADED LOCAL data.json', { replaced: true });
     } catch (e) {}
   }
 
-  function saveState(msg) {
+  // Change tracking for sync: stamp edited entries, tombstone deleted ones,
+  // and note when settings changed, by diffing against the last saved snapshot.
+  const SETTINGS_KEYS = ['meta', 'activeProgressions', 'customNotes', 'schedule', 'programNotes'];
+
+  function entryKey(e) {
+    const c = Object.assign({}, e);
+    delete c.updatedAt;
+    return JSON.stringify(c);
+  }
+
+  function takeSnapshot(s) {
+    const entries = new Map();
+    L.LOG_KEYS.forEach(k => (s[k] || []).forEach(e => entries.set(e.id, entryKey(e))));
+    return { settings: JSON.stringify(SETTINGS_KEYS.map(k => s[k])), entries };
+  }
+
+  let snapshot = takeSnapshot(state);
+
+  function stampChanges() {
+    const now = new Date().toISOString();
+    const seen = new Set();
+    L.LOG_KEYS.forEach(k => (state[k] || []).forEach(e => {
+      seen.add(e.id);
+      if (snapshot.entries.get(e.id) !== entryKey(e)) e.updatedAt = now;
+    }));
+    snapshot.entries.forEach((_, id) => {
+      if (!seen.has(id)) {
+        state.deleted = state.deleted || {};
+        state.deleted[id] = now;
+      }
+    });
+    if (JSON.stringify(SETTINGS_KEYS.map(k => state[k])) !== snapshot.settings) state.settingsUpdatedAt = now;
+  }
+
+  // opts.replaced: state was swapped wholesale (import/pull/reset) -> don't treat as user edits.
+  // opts.noSync: don't schedule an automatic sync.
+  function saveState(msg, opts = {}) {
     try {
+      if (!opts.replaced) stampChanges();
+      snapshot = takeSnapshot(state);
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
       if (msg) showToast(msg);
       renderAll();
+      if (!opts.noSync) scheduleSync();
     } catch (e) {
       console.error('Failed to save state:', e);
     }
@@ -697,15 +740,15 @@
     if (preview) {
       preview.value = generateMarkdownExport();
     }
-    let savedToken = null, savedRepo = null;
+    let savedRepo = null, remembered = false;
     try {
-      savedToken = sessionStorage.getItem(GH_TOKEN_KEY);
       savedRepo = localStorage.getItem(GH_REPO_KEY);
+      remembered = !!localStorage.getItem(GH_REMEMBER_KEY);
     } catch (e) {}
-    const tokenInput = document.getElementById('gh-token');
-    if (savedToken && tokenInput && !tokenInput.value) tokenInput.value = savedToken;
     const repoInput = document.getElementById('gh-repo');
-    if (savedRepo && repoInput && !repoInput.value) repoInput.value = savedRepo;
+    if (savedRepo && repoInput) repoInput.value = savedRepo;
+    const rememberBox = document.getElementById('gh-remember');
+    if (rememberBox && remembered) rememberBox.checked = true;
   }
 
   function renderAll() {
@@ -1153,7 +1196,7 @@
     try {
       const parsed = JSON.parse(document.getElementById('import-json-input').value);
       state = withDefaults(parsed);
-      saveState('STATE IMPORTED');
+      saveState('STATE IMPORTED', { replaced: true });
     } catch (err) {
       showToast('INVALID JSON');
     }
@@ -1164,7 +1207,7 @@
     if (!file) return;
     try {
       state = withDefaults(JSON.parse(await file.text()));
-      saveState(`IMPORTED ${file.name}`);
+      saveState(`IMPORTED ${file.name}`, { replaced: true });
       switchTab('status');
     } catch (err) {
       showToast('INVALID JSON FILE');
@@ -1173,12 +1216,16 @@
   });
 
   document.getElementById('btn-factory-reset').addEventListener('click', () => {
-    if (!confirm('Erase ALL logged data in this browser? Export JSON first if unsure.')) return;
+    if (!confirm('Erase ALL logged data in this browser? (Synced data on GitHub is not deleted.) Export JSON first if unsure.')) return;
+    forgetToken();
     state = clone(DEFAULT_STATE);
-    saveState('ALL DATA CLEARED');
+    saveState('ALL DATA CLEARED', { replaced: true, noSync: true });
   });
 
-  // GitHub Direct API Sync (private repos only: this data is personal)
+  // ==========================================
+  // GITHUB SYNC (private repos only: this data is personal)
+  // Merges both ways (lib.js mergeStates), so devices never overwrite each other.
+  // ==========================================
   function ghHeaders(token, accept = 'application/vnd.github+json') {
     return {
       'Authorization': `Bearer ${token}`,
@@ -1187,82 +1234,216 @@
     };
   }
 
+  function ghError(res, text) {
+    const err = new Error(`GitHub API ${res.status}${text ? ': ' + text.slice(0, 160) : ''}`);
+    err.status = res.status;
+    return err;
+  }
+
+  const verifiedPrivate = new Set();
   async function assertPrivateRepo(repo, token) {
-    const res = await fetch(`https://api.github.com/repos/${repo}`, { headers: ghHeaders(token) });
+    if (verifiedPrivate.has(repo)) return;
+    const res = await fetch(`https://api.github.com/repos/${repo}`, { headers: ghHeaders(token), cache: 'no-store' });
+    if (res.status === 401) throw new Error('Token rejected (expired or revoked?). Paste a new one in 6:sync.');
     if (!res.ok) throw new Error(`Cannot read repo ${repo} (HTTP ${res.status}). Check the name and token.`);
     const info = await res.json();
     if (!info.private) {
       throw new Error(`Refusing to sync: ${repo} is PUBLIC. Use a private repo for your data (e.g. ${repo.split('/')[0]}/FIT-data).`);
     }
+    verifiedPrivate.add(repo);
   }
 
-  async function githubUpsertFile(repo, branch, token, path, contentStr, message) {
-    const url = `https://api.github.com/repos/${repo}/contents/${path}`;
-    const headers = Object.assign(ghHeaders(token), { 'Content-Type': 'application/json' });
-    let sha = null;
-    const getRes = await fetch(`${url}?ref=${encodeURIComponent(branch)}`, { headers });
-    if (getRes.ok) {
-      const getJson = await getRes.json();
-      sha = getJson.sha;
-    }
-    const body = {
-      message,
-      content: btoa(unescape(encodeURIComponent(contentStr))),
-      branch
-    };
+  function b64encodeUtf8(str) {
+    return btoa(unescape(encodeURIComponent(str)));
+  }
+
+  function b64decodeUtf8(b64) {
+    const bin = atob(b64.replace(/\n/g, ''));
+    return new TextDecoder().decode(Uint8Array.from(bin, c => c.charCodeAt(0)));
+  }
+
+  async function getFile(cfg, path) {
+    const res = await fetch(
+      `https://api.github.com/repos/${cfg.repo}/contents/${path}?ref=${encodeURIComponent(cfg.branch)}`,
+      { headers: ghHeaders(cfg.token), cache: 'no-store' }
+    );
+    if (res.status === 404) return { text: null, sha: null };
+    if (!res.ok) throw ghError(res, await res.text());
+    const json = await res.json();
+    return { text: b64decodeUtf8(json.content || ''), sha: json.sha };
+  }
+
+  async function putFile(cfg, path, text, sha, message) {
+    const body = { message, content: b64encodeUtf8(text), branch: cfg.branch };
     if (sha) body.sha = sha;
-    const putRes = await fetch(url, { method: 'PUT', headers, body: JSON.stringify(body) });
-    if (!putRes.ok) {
-      const errText = await putRes.text();
-      throw new Error(`GitHub API ${putRes.status}: ${errText}`);
+    const res = await fetch(`https://api.github.com/repos/${cfg.repo}/contents/${path}`, {
+      method: 'PUT',
+      headers: Object.assign(ghHeaders(cfg.token), { 'Content-Type': 'application/json' }),
+      body: JSON.stringify(body)
+    });
+    if (!res.ok) throw ghError(res, await res.text());
+  }
+
+  function getToken() {
+    const typed = document.getElementById('gh-token').value.trim();
+    if (typed) return typed;
+    try {
+      return sessionStorage.getItem(GH_TOKEN_KEY) || localStorage.getItem(GH_REMEMBER_KEY) || '';
+    } catch (e) {
+      return '';
     }
   }
 
-  function readSyncForm() {
+  function getSyncConfig() {
+    const token = getToken();
+    if (!token) return null;
     const repo = document.getElementById('gh-repo').value.trim();
     const branch = document.getElementById('gh-branch').value.trim() || 'main';
-    const token = document.getElementById('gh-token').value.trim();
-    if (!repo || !token) throw new Error('Enter a private repository and a fine-grained token first.');
-    try {
-      sessionStorage.setItem(GH_TOKEN_KEY, token);
-      localStorage.setItem(GH_REPO_KEY, repo);
-    } catch (e) {}
-    return { repo, branch, token };
+    return repo ? { repo, branch, token } : null;
   }
 
-  document.getElementById('gh-sync-form').addEventListener('submit', async e => {
-    e.preventDefault();
-    const statusEl = document.getElementById('gh-sync-status');
+  function storeToken() {
+    const token = document.getElementById('gh-token').value.trim();
+    const repo = document.getElementById('gh-repo').value.trim();
+    const remember = document.getElementById('gh-remember').checked;
     try {
-      const { repo, branch, token } = readSyncForm();
-      statusEl.textContent = `Checking ${repo} is private...`;
-      await assertPrivateRepo(repo, token);
-      statusEl.textContent = 'Pushing data.json and WORKOUT_LOG.md...';
-      await githubUpsertFile(repo, branch, token, 'data.json', JSON.stringify(state, null, 2) + '\n', 'Sync FIT state from web UI');
-      await githubUpsertFile(repo, branch, token, 'WORKOUT_LOG.md', generateMarkdownExport() + '\n', 'Sync WORKOUT_LOG.md from web UI');
-      statusEl.textContent = `Synced to ${repo}@${branch} at ${new Date().toLocaleTimeString()}`;
-      showToast('SYNCED TO GITHUB');
-    } catch (err) {
-      statusEl.textContent = err.message;
+      if (repo) localStorage.setItem(GH_REPO_KEY, repo);
+      if (token) sessionStorage.setItem(GH_TOKEN_KEY, token);
+      if (remember && token) localStorage.setItem(GH_REMEMBER_KEY, token);
+      if (!remember) localStorage.removeItem(GH_REMEMBER_KEY);
+    } catch (e) {}
+  }
+
+  function forgetToken() {
+    try {
+      localStorage.removeItem(GH_REMEMBER_KEY);
+      sessionStorage.removeItem(GH_TOKEN_KEY);
+    } catch (e) {}
+    document.getElementById('gh-token').value = '';
+    document.getElementById('gh-remember').checked = false;
+    setSyncStatus('off');
+  }
+
+  function setSyncStatus(kind, detail = '') {
+    const bar = document.getElementById('bar-sync');
+    const statusEl = document.getElementById('gh-sync-status');
+    const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const label = {
+      off: 'sync:off',
+      busy: 'sync:...',
+      ok: `sync:ok ${time}`,
+      error: 'sync:ERR'
+    }[kind];
+    if (bar) {
+      bar.textContent = label;
+      bar.title = detail || label;
     }
+    if (statusEl && (detail || kind !== 'busy')) {
+      statusEl.textContent = detail || (kind === 'ok' ? `In sync at ${time}.` : kind === 'off' ? 'Automatic sync is off on this device.' : '');
+    }
+  }
+
+  let syncTimer = null;
+  let syncing = false;
+  let syncQueued = false;
+
+  function scheduleSync(delayMs = 4000) {
+    if (!getSyncConfig()) return;
+    clearTimeout(syncTimer);
+    syncTimer = setTimeout(() => syncNow(), delayMs);
+  }
+
+  async function syncNow({ loud = false } = {}) {
+    const cfg = getSyncConfig();
+    if (!cfg) {
+      setSyncStatus('off');
+      if (loud) setSyncStatus('error', 'Paste your token first.');
+      return;
+    }
+    if (syncing) {
+      syncQueued = true;
+      return;
+    }
+    syncing = true;
+    setSyncStatus('busy');
+    try {
+      await assertPrivateRepo(cfg.repo, cfg.token);
+      for (let attempt = 0; ; attempt++) {
+        const remoteFile = await getFile(cfg, 'data.json');
+        const remote = remoteFile.text ? JSON.parse(remoteFile.text) : null;
+        const merged = withDefaults(L.mergeStates(state, remote));
+
+        if (L.stableStringify(merged) !== L.stableStringify(state)) {
+          state = merged;
+          saveState(null, { replaced: true, noSync: true });
+        }
+        if (remote && L.stableStringify(merged) === L.stableStringify(remote)) break;
+
+        try {
+          await putFile(cfg, 'data.json', JSON.stringify(merged, null, 2) + '\n', remoteFile.sha, 'Sync from web app');
+        } catch (err) {
+          // Another device pushed between our read and write: re-read and merge again.
+          if ((err.status === 409 || err.status === 422) && attempt < 2) continue;
+          throw err;
+        }
+        try {
+          const log = await getFile(cfg, 'WORKOUT_LOG.md');
+          await putFile(cfg, 'WORKOUT_LOG.md', generateMarkdownExport() + '\n', log.sha, 'Sync WORKOUT_LOG.md from web app');
+        } catch (e) {
+          console.warn('WORKOUT_LOG.md not updated:', e);
+        }
+        break;
+      }
+      setSyncStatus('ok');
+      if (loud) showToast('SYNCED');
+    } catch (err) {
+      setSyncStatus('error', err.message);
+      showToast('SYNC FAILED: see 6:sync');
+    } finally {
+      syncing = false;
+      if (syncQueued) {
+        syncQueued = false;
+        scheduleSync(500);
+      }
+    }
+  }
+
+  document.getElementById('gh-sync-form').addEventListener('submit', e => {
+    e.preventDefault();
+    storeToken();
+    syncNow({ loud: true });
+  });
+
+  document.getElementById('gh-remember').addEventListener('change', () => {
+    storeToken();
+    if (document.getElementById('gh-remember').checked) syncNow({ loud: true });
+  });
+
+  document.getElementById('btn-gh-forget').addEventListener('click', () => {
+    forgetToken();
+    showToast('TOKEN REMOVED FROM THIS DEVICE');
   });
 
   document.getElementById('btn-gh-pull').addEventListener('click', async () => {
-    const statusEl = document.getElementById('gh-sync-status');
+    if (!confirm('Replace ALL data in this browser with the GitHub copy? Unsynced local changes will be lost.')) return;
+    storeToken();
+    const cfg = getSyncConfig();
+    if (!cfg) return setSyncStatus('error', 'Paste your token first.');
     try {
-      const { repo, branch, token } = readSyncForm();
-      statusEl.textContent = 'Fetching latest data.json...';
-      const res = await fetch(
-        `https://api.github.com/repos/${repo}/contents/data.json?ref=${encodeURIComponent(branch)}`,
-        { headers: ghHeaders(token, 'application/vnd.github.raw+json'), cache: 'no-store' }
-      );
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      state = withDefaults(await res.json());
-      saveState('PULLED FROM GITHUB');
-      statusEl.textContent = `Pulled latest data.json from ${repo}@${branch}.`;
+      await assertPrivateRepo(cfg.repo, cfg.token);
+      const remote = await getFile(cfg, 'data.json');
+      if (!remote.text) throw new Error('No data.json in the repo yet.');
+      state = withDefaults(JSON.parse(remote.text));
+      saveState('REPLACED WITH GITHUB COPY', { replaced: true, noSync: true });
+      setSyncStatus('ok');
     } catch (err) {
-      statusEl.textContent = 'Pull failed: ' + err.message;
+      setSyncStatus('error', 'Replace failed: ' + err.message);
     }
+  });
+
+  // Pick up changes from other devices when returning to the tab/app.
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') scheduleSync(0);
   });
 
   // Keyboard shortcuts (1-6 tabs, t theme, space timer) when not in input/textarea
@@ -1293,4 +1474,6 @@
   prefillNextTargetIntoForm();
   renderAll();
   seedFromLocalDataJson();
+  if (getSyncConfig()) syncNow();
+  else setSyncStatus('off');
 })();
