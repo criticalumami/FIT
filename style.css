@@ -582,3 +582,59 @@ footer {
 #toast-status.visible {
   display: inline-block;
 }
+
+/* Workout-mode RR logger */
+.rrq-pair {
+  border: 1px solid var(--border);
+  padding: 8px;
+  margin-bottom: 8px;
+}
+.rrq-pair-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+  font-weight: 700;
+}
+.rrq-ex {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 6px 10px;
+  align-items: center;
+  padding: 6px 0;
+  border-top: 1px dashed var(--border);
+}
+.rrq-ex:first-of-type { border-top: 0; }
+.rrq-ex select { width: 100%; }
+.rrq-ex .hint { grid-column: 1 / -1; }
+.rrq-sets { display: flex; gap: 6px; }
+.stepper { display: inline-flex; align-items: stretch; border: 1px solid var(--border-strong); flex: 1 1 0; min-width: 0; max-width: 140px; }
+.stepper button {
+  min-width: 32px;
+  min-height: 40px;
+  padding: 0 6px;
+  border: 0;
+  background: var(--bg-hover);
+  color: var(--fg);
+  font: inherit;
+  font-size: 16px;
+  cursor: pointer;
+}
+.stepper input {
+  width: 100%;
+  min-width: 2em;
+  padding: 0;
+  text-align: center;
+  border: 0;
+  border-left: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+  font-size: 16px;
+  -moz-appearance: textfield;
+}
+.stepper input::-webkit-outer-spin-button,
+.stepper input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+#rr-advanced > summary { display: inline-block; cursor: pointer; margin-bottom: 4px; }
+@media (max-width: 860px) {
+  .rrq-ex { grid-template-columns: 1fr; }
+}

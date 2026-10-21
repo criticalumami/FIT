@@ -19,7 +19,7 @@
   <header class="dwm-bar" role="banner">
     <nav class="dwm-tags" role="tablist" aria-label="Workspace Views">
       <button type="button" class="dwm-tag" role="tab" aria-selected="true" data-tab="status" title="Shortcut: 1">1:status</button>
-      <button type="button" class="dwm-tag" role="tab" aria-selected="false" data-tab="log" title="Shortcut: 2">2:log+edit</button>
+      <button type="button" class="dwm-tag" role="tab" aria-selected="false" data-tab="log" title="Shortcut: 2">2:log RR</button>
       <button type="button" class="dwm-tag" role="tab" aria-selected="false" data-tab="program" title="Shortcut: 3">3:program</button>
       <button type="button" class="dwm-tag" role="tab" aria-selected="false" data-tab="form" title="Shortcut: 4">4:form+ladders</button>
       <button type="button" class="dwm-tag" role="tab" aria-selected="false" data-tab="metrics" title="Shortcut: 5">5:runs+weight</button>
@@ -146,6 +146,39 @@
          ========================================== -->
     <section id="view-log" class="view-panel" role="tabpanel">
       <div class="tile-grid">
+        <!-- Workout-mode logger: prefilled with today's targets, tap +/- per set -->
+        <div class="tile tile-focus col-12" id="rr-quick">
+          <div class="tile-header">
+            <span>Log Today's RR Session</span>
+            <span class="meta" id="rrq-meta">Prefilled with your next targets</span>
+          </div>
+          <div class="tile-body">
+            <div class="form-grid" style="margin-bottom:10px;">
+              <div class="field">
+                <label for="rrq-date">Date:</label>
+                <input type="date" id="rrq-date">
+              </div>
+              <div class="field">
+                <label for="rrq-bw">Bodyweight (kg, optional):</label>
+                <input type="number" id="rrq-bw" step="0.1" inputmode="decimal" placeholder="kg">
+              </div>
+            </div>
+            <div id="rrq-exercises"></div>
+            <div class="field" style="margin:10px 0;">
+              <label for="rrq-notes">Notes / RPE (optional):</label>
+              <input type="text" id="rrq-notes" placeholder="e.g. felt strong, 90s rest">
+            </div>
+            <div class="btn-row">
+              <button type="button" class="btn" id="rrq-save">Save Session</button>
+              <button type="button" class="btn-secondary" id="rrq-reset">Reset to Targets</button>
+              <span class="hint">Your entries are kept as a draft until you save.</span>
+            </div>
+          </div>
+        </div>
+
+        <details class="col-12" id="rr-advanced">
+          <summary class="btn-inline">Advanced: shorthand parser &amp; detailed form (edit past sessions)</summary>
+          <div class="tile-grid" style="margin-top:10px;">
         <!-- Quick Shorthand Parser (dmenu style) -->
         <div class="tile tile-focus col-12">
           <div class="tile-header">
@@ -285,6 +318,8 @@
             </form>
           </div>
         </div>
+          </div>
+        </details>
 
         <!-- Logged RR Sessions Table -->
         <div class="tile col-12">

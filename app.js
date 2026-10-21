@@ -753,6 +753,7 @@
 
   function renderAll() {
     renderStatus();
+    renderQuickLogger();
     populateLoggerSelects();
     renderRRHistory();
     renderProgram();
@@ -947,6 +948,8 @@
     if (editId) {
       const sess = state.rrSessions.find(x => x.id === editId);
       if (sess) {
+        document.getElementById('rr-advanced').open = true;
+        switchTab('log');
         populateLoggerSelects();
         document.getElementById('rr-edit-id').value = sess.id;
         document.getElementById('rr-form-title').textContent = `Editing Session: ${sess.date}`;
@@ -1090,24 +1093,9 @@
       notes: document.getElementById('rr-notes').value.trim()
     };
 
-    if (editId) {
-      const idx = state.rrSessions.findIndex(x => x.id === editId);
-      if (idx !== -1) state.rrSessions[idx] = entry;
-    } else {
-      state.rrSessions.push(entry);
-    }
-
-    // Also update active progressions to match logged session
-    state.activeProgressions.pull = entry.pull_prog;
-    state.activeProgressions.squat = entry.squat_prog;
-    state.activeProgressions.dip = entry.dip_prog;
-    state.activeProgressions.hinge = entry.hinge_prog;
-    state.activeProgressions.row = entry.row_prog;
-    state.activeProgressions.push = entry.push_prog;
-
     document.getElementById('rr-edit-id').value = '';
     document.getElementById('rr-form-title').textContent = 'Log / Edit Recommended Routine Session';
-    saveState('RR SESSION SAVED');
+    commitRRSession(entry, editId);
   });
 
   // Program Notes & Reset Schedule
@@ -1463,6 +1451,200 @@
     if (await reloadIfStale()) return;
     scheduleSync(0);
   });
+
+  // ==========================================
+  // WORKOUT-MODE RR LOGGER (tab 2, top)
+  // A draft prefilled with the next targets; survives reloads until saved.
+  // ==========================================
+  const RRQ_DRAFT_KEY = 'fit_rr_draft_v1';
+  const PAIRS = [
+    ['Pair 1: Pull + Squat', ['pull', 'squat']],
+    ['Pair 2: Dip + Hinge', ['dip', 'hinge']],
+    ['Pair 3: Row + Push-Up', ['row', 'push']]
+  ];
+  const isoToday = () => new Date().toISOString().slice(0, 10);
+
+  function setSuffix(exId, last) {
+    const p = last && L.parseSets(last[exId + '_sets']);
+    if (p && p.suffix) return p.suffix;
+    return /\/leg/.test(exById(exId).targetRange || '') ? ' (/leg)' : '';
+  }
+
+  function freshDraft() {
+    const last = getLatestRR();
+    const w = getLatestWeight();
+    const draft = { date: isoToday(), bw: w != null ? w : '', notes: '', ex: {}, core: {} };
+    RR_SLOTS.forEach(([, id]) => {
+      const ex = exById(id);
+      let prog = state.activeProgressions[id] || (last && last[id + '_prog']) || ex.ladders[0];
+      let reps = [ex.minRep || 5, ex.minRep || 5, ex.minRep || 5];
+      let hint = 'No previous session: start at the bottom of the range.';
+      if (last && last[id + '_sets']) {
+        const next = nextFor(id, last[id + '_sets']);
+        const p = L.parseSets(next.sets);
+        if (p) reps = p.reps;
+        hint = `Last: ${last[id + '_sets']}`;
+        if (next.action === 'level_up') {
+          const up = adjacentStep(id, prog, +1);
+          if (up) {
+            prog = up;
+            hint += ` -> hit the top: LEVEL UP to ${shortProg(up)}`;
+          }
+        } else if (next.action === 'regress') {
+          const down = adjacentStep(id, prog, -1);
+          hint += ` -> below ${ex.minRep}: aim for +1 rep, or switch to ${down ? shortProg(down) : 'an easier step'}`;
+        } else {
+          hint += ' -> +1 rep on the weakest set';
+        }
+      }
+      draft.ex[id] = { prog, reps, hint };
+    });
+    draft.core = {
+      antiext: (last && last.antiext) || 'Plank 2x30s',
+      antirot: (last && last.antirot) || 'Side Plank 2x15s/side',
+      ext: (last && last.ext) || 'Arch/RevHyper 2x8'
+    };
+    return draft;
+  }
+
+  let rrDraft = null;
+
+  function loadDraft() {
+    try {
+      const d = JSON.parse(localStorage.getItem(RRQ_DRAFT_KEY) || 'null');
+      if (d && d.date === isoToday() && d.ex) return d;
+    } catch (e) {}
+    return freshDraft();
+  }
+
+  function saveDraft() {
+    try { localStorage.setItem(RRQ_DRAFT_KEY, JSON.stringify(rrDraft)); } catch (e) {}
+  }
+
+  function renderQuickLogger(force = false) {
+    const root = document.getElementById('rr-quick');
+    if (!root) return;
+    // Don't rebuild under the user's fingers (auto-sync can re-render mid-entry).
+    if (!force && root.contains(document.activeElement)) return;
+    if (!rrDraft) rrDraft = loadDraft();
+    document.getElementById('rrq-date').value = rrDraft.date;
+    document.getElementById('rrq-bw').value = rrDraft.bw;
+    document.getElementById('rrq-notes').value = rrDraft.notes;
+
+    const exHtml = id => {
+      const ex = exById(id);
+      const d = rrDraft.ex[id];
+      const opts = ex.ladders.map(l => `<option value="${esc(l)}" ${l === d.prog ? 'selected' : ''}>${esc(l)}</option>`).join('');
+      const steppers = d.reps.map((r, i) => `
+        <div class="stepper" role="group" aria-label="${esc(ex.slot)} set ${i + 1}">
+          <button type="button" data-rrq-step="-1" data-ex="${id}" data-set="${i}" aria-label="minus one">&minus;</button>
+          <input type="number" inputmode="numeric" min="0" data-rrq-rep data-ex="${id}" data-set="${i}" value="${esc(r)}" aria-label="Set ${i + 1} reps">
+          <button type="button" data-rrq-step="1" data-ex="${id}" data-set="${i}" aria-label="plus one">+</button>
+        </div>`).join('');
+      return `
+        <div class="rrq-ex">
+          <div>
+            <div><strong>${esc(ex.slot.replace(/^Pair \d[AB]: /, ''))}</strong> <span class="muted">${esc(ex.targetRange)}</span></div>
+            <select data-rrq-prog="${id}" aria-label="${esc(ex.slot)} progression">${opts}</select>
+          </div>
+          <div class="rrq-sets">${steppers}</div>
+          <span class="hint">${esc(d.hint || '')}</span>
+        </div>`;
+    };
+    const pairsHtml = PAIRS.map(([title, ids]) => `
+      <div class="rrq-pair">
+        <div class="rrq-pair-head"><span>${esc(title)}</span><button type="button" class="btn-inline" data-timer-set="90">rest 90s</button></div>
+        ${ids.map(exHtml).join('')}
+      </div>`).join('');
+    const coreHtml = `
+      <div class="rrq-pair">
+        <div class="rrq-pair-head"><span>Core Triplet</span><button type="button" class="btn-inline" data-timer-set="60">rest 60s</button></div>
+        <div class="form-grid">
+          ${[['antiext', 'Anti-extension'], ['antirot', 'Anti-rotation'], ['ext', 'Extension']].map(([k, label]) => `
+            <div class="field">
+              <label for="rrq-${k}">${label}:</label>
+              <input type="text" id="rrq-${k}" data-rrq-core="${k}" value="${esc(rrDraft.core[k])}">
+            </div>`).join('')}
+        </div>
+      </div>`;
+    document.getElementById('rrq-exercises').innerHTML = pairsHtml + coreHtml;
+    const already = state.rrSessions.some(s => s.date === rrDraft.date);
+    document.getElementById('rrq-meta').textContent = already
+      ? `A session is already logged for ${rrDraft.date}`
+      : 'Prefilled with your next targets';
+  }
+
+  function setRep(id, i, val) {
+    const n = Math.max(0, Math.min(99, parseInt(val, 10) || 0));
+    rrDraft.ex[id].reps[i] = n;
+    saveDraft();
+    return n;
+  }
+
+  document.getElementById('rr-quick').addEventListener('click', e => {
+    const btn = e.target.closest('[data-rrq-step]');
+    if (!btn) return;
+    const { ex, set } = btn.dataset;
+    const n = setRep(ex, +set, rrDraft.ex[ex].reps[+set] + parseInt(btn.dataset.rrqStep, 10));
+    const input = document.querySelector(`[data-rrq-rep][data-ex="${ex}"][data-set="${set}"]`);
+    if (input) input.value = n;
+  });
+
+  document.getElementById('rr-quick').addEventListener('input', e => {
+    const t = e.target;
+    if (t.matches('[data-rrq-rep]')) setRep(t.dataset.ex, +t.dataset.set, t.value);
+    else if (t.matches('[data-rrq-core]')) { rrDraft.core[t.dataset.rrqCore] = t.value; saveDraft(); }
+    else if (t.id === 'rrq-bw') { rrDraft.bw = t.value; saveDraft(); }
+    else if (t.id === 'rrq-notes') { rrDraft.notes = t.value; saveDraft(); }
+    else if (t.id === 'rrq-date') { rrDraft.date = t.value || isoToday(); saveDraft(); }
+  });
+
+  document.getElementById('rr-quick').addEventListener('change', e => {
+    const id = e.target.dataset.rrqProg;
+    if (id) { rrDraft.ex[id].prog = e.target.value; saveDraft(); }
+  });
+
+  document.getElementById('rrq-reset').addEventListener('click', () => {
+    if (!confirm("Reset today's entries back to the suggested targets?")) return;
+    rrDraft = freshDraft();
+    saveDraft();
+    renderQuickLogger(true);
+  });
+
+  document.getElementById('rrq-save').addEventListener('click', () => {
+    const d = rrDraft;
+    if (state.rrSessions.some(s => s.date === d.date) &&
+        !confirm(`You already logged a session on ${d.date}. Save another one?`)) return;
+    const last = getLatestRR();
+    const bw = parseFloat(d.bw);
+    const entry = { id: 'rr-' + Date.now(), date: d.date, bw: !isNaN(bw) ? bw : getLatestWeight() };
+    RR_SLOTS.forEach(([, id]) => {
+      entry[id + '_prog'] = d.ex[id].prog;
+      entry[id + '_sets'] = d.ex[id].reps.join(',') + setSuffix(id, last);
+    });
+    entry.antiext = d.core.antiext.trim();
+    entry.antirot = d.core.antirot.trim();
+    entry.ext = d.core.ext.trim();
+    entry.notes = (d.notes || '').trim();
+    commitRRSession(entry, null);
+    try { localStorage.removeItem(RRQ_DRAFT_KEY); } catch (e) {}
+    rrDraft = freshDraft(); // next session's targets, based on what was just logged
+    renderQuickLogger(true);
+    switchTab('status');
+  });
+
+  // Shared by the workout-mode logger and the detailed form.
+  function commitRRSession(entry, editId) {
+    if (editId) {
+      const idx = state.rrSessions.findIndex(x => x.id === editId);
+      if (idx !== -1) state.rrSessions[idx] = entry;
+    } else {
+      state.rrSessions.push(entry);
+    }
+    // Logged steps become the active progressions.
+    RR_SLOTS.forEach(([, id]) => { state.activeProgressions[id] = entry[id + '_prog']; });
+    saveState(editId ? 'RR SESSION UPDATED' : 'RR SESSION SAVED');
+  }
 
   // Keyboard shortcuts (1-6 tabs, t theme, space timer) when not in input/textarea
   document.addEventListener('keydown', e => {
