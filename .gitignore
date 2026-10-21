@@ -5,6 +5,7 @@ _site/
 # Personal data: never commit (this repo and its GitHub Pages site are public).
 data.json
 data.json.tmp
+data.json.bak
 health_export/
 Export.zip
 generated/

@@ -11,6 +11,8 @@ truth; program.js holds the generic exercise ladders and default schedule.
   python3 fit.py log-weight 2026-10-21 78.6
   python3 fit.py log-run 2026-10-22 "Tempo / Threshold Run" 8.5 58.0 --hr 160
   python3 fit.py log-rr pull=5,4,4 squat="5,5,5 (/leg)" dip=6,5,5 --notes "felt good"
+  python3 fit.py pull                     # fetch data.json from the private data repo (uses `gh`)
+  python3 fit.py push                     # upload data.json + WORKOUT_LOG.md to the private data repo
 """
 import argparse
 import csv
@@ -30,6 +32,7 @@ DATA_PATH = os.path.join(DIR, "data.json")
 PROGRAM_JS = os.path.join(DIR, "program.js")
 PROGRAM_MD = os.path.join(DIR, "PROGRAM.md")
 OUT_DIR = os.path.join(DIR, "generated")
+DATA_REPO = os.environ.get("FIT_DATA_REPO", "criticalumami/FIT-data")
 
 PROGRAM_MARK = "window.FIT_PROGRAM ="
 RR_SLOTS = [("Pull", "pull"), ("Squat", "squat"), ("Dip", "dip"), ("Hinge", "hinge"), ("Row", "row"), ("Push", "push")]
@@ -457,6 +460,49 @@ def health_summary_txt(h):
     return "\n".join(out) + "\n"
 
 
+# Private data repo sync (same files the web app's GitHub sync uses) -----------
+
+def gh_api(*args, input_text=None):
+    res = subprocess.run(["gh", "api", *args], input=input_text, capture_output=True, text=True)
+    if res.returncode != 0:
+        raise RuntimeError(res.stderr.strip() or res.stdout.strip())
+    return res.stdout
+
+
+def assert_private(repo):
+    if json.loads(gh_api(f"repos/{repo}")).get("private") is not True:
+        sys.exit(f"Refusing to sync: {repo} is not private.")
+
+
+def cmd_pull(args):
+    assert_private(args.repo)
+    remote = json.loads(gh_api(f"repos/{args.repo}/contents/data.json", "-H", "Accept: application/vnd.github.raw+json"))
+    if os.path.exists(DATA_PATH):
+        shutil.copy(DATA_PATH, DATA_PATH + ".bak")
+    save_data(remote)
+    print(f"pulled data.json from {args.repo} (previous copy saved as data.json.bak)")
+
+
+def upsert(repo, path, text, message):
+    import base64
+    try:
+        sha = json.loads(gh_api(f"repos/{repo}/contents/{path}"))["sha"]
+    except RuntimeError:
+        sha = None
+    body = {"message": message, "content": base64.b64encode(text.encode("utf-8")).decode("ascii")}
+    if sha:
+        body["sha"] = sha
+    gh_api("-X", "PUT", f"repos/{repo}/contents/{path}", "--input", "-", input_text=json.dumps(body))
+
+
+def cmd_push(args):
+    assert_private(args.repo)
+    data = load_data()
+    upsert(args.repo, "data.json", json.dumps(data, indent=2, ensure_ascii=False) + "\n", "Sync data.json from fit.py")
+    upsert(args.repo, "WORKOUT_LOG.md", workout_log_md(data), "Sync WORKOUT_LOG.md from fit.py")
+    print(f"pushed data.json and WORKOUT_LOG.md to {args.repo}")
+
+
 def cmd_health(args):
     h = parse_health(os.path.expanduser(args.export_xml), args.since)
     write(os.path.join(OUT_DIR, "daily_breakdown.txt"), daily_breakdown_txt(h))
@@ -500,6 +546,12 @@ def main(argv=None):
     rr.add_argument("--bw", type=float)
     rr.add_argument("--notes")
     rr.set_defaults(func=cmd_log_rr)
+
+    for name, func, text in (("pull", cmd_pull, "replace data.json with the private repo's copy"),
+                             ("push", cmd_push, "upload data.json to the private repo")):
+        sp = sub.add_parser(name, help=text)
+        sp.add_argument("--repo", default=DATA_REPO, help="private data repo (env FIT_DATA_REPO)")
+        sp.set_defaults(func=func)
 
     args = ap.parse_args(argv)
     args.func(args)

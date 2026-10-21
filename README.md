@@ -21,7 +21,18 @@ A zero-dependency web app (Recommended Routine + running + weight trend) plus a 
 
 **Web app** (phone or desktop): log RR sessions, runs and weigh-ins. Data is stored in that browser's `localStorage`, so use **6:sync → Download fit_state.json** regularly as a backup.
 
-**Getting web data into `data.json`:** download `fit_state.json` from the app and save it over `data.json`. Or use the GitHub sync with a **private** data repo (the app refuses to push to a public one): create e.g. `you/FIT-data` (private), and a fine-grained token limited to that repo with *Contents: read & write* and an expiry date.
+**Syncing between devices:** your data lives in the private repo `criticalumami/FIT-data` (sync refuses public repos).
+
+- **Web app:** tab 6 → paste a fine-grained token → *Pull Latest* to load, *Push State* after logging. The token is limited to `FIT-data` with *Contents: read & write*, and you need to paste it again in each new tab.
+- **Mac:** keep `data.json` in step with the repo (uses your `gh` login):
+
+```bash
+python3 fit.py pull
+```
+
+```bash
+python3 fit.py push
+```
 
 **Run the app locally with your data** (first load seeds from `data.json` when the browser has no saved state):
 
