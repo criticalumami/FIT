@@ -10,3 +10,6 @@ health_export/
 Export.zip
 generated/
 archive/
+
+# Unsigned build output of tools/make_shortcut.py
+shortcuts/*.unsigned.shortcut
