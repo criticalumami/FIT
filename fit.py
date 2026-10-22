@@ -339,6 +339,9 @@ def cmd_log_run(args):
         "km": args.km, "min": args.min, "hr": args.hr, "maxHr": args.max_hr, "notes": args.notes or "",
         "updatedAt": now_iso(),
     })
+    for field in ("power", "kcal", "vo2"):
+        if getattr(args, field) is not None:
+            data["runLog"][-1][field] = getattr(args, field)
     save_data(data)
     print(f"logged {args.km} km run on {args.date}")
     auto_sync(args, "after")
@@ -647,6 +650,9 @@ def main(argv=None):
     r.add_argument("min", type=float)
     r.add_argument("--hr", type=int)
     r.add_argument("--max-hr", type=int)
+    r.add_argument("--power", type=int, help="average running power (W)")
+    r.add_argument("--kcal", type=int, help="active energy (kcal)")
+    r.add_argument("--vo2", type=float, help="VO2 max estimate after the run")
     r.add_argument("--notes")
     r.set_defaults(func=cmd_log_run)
 
