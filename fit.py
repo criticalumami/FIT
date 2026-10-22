@@ -8,6 +8,7 @@ truth; program.js holds the generic exercise ladders and default schedule.
   python3 fit.py generate --copy-to DIR   # also copy WORKOUT_LOG.md into DIR (e.g. an Obsidian vault)
   python3 fit.py generate --apple-calendar  # also replace "FIT:" events in macOS Calendar
   python3 fit.py health PATH/TO/Export.xml  # health_summary.txt + daily_breakdown.txt -> generated/
+  python3 fit.py import-health ~/Downloads/Export.zip  # add new runs/weigh-ins/daily metrics (last 14 days)
   python3 fit.py log-weight 2026-10-21 78.6
   python3 fit.py log-run 2026-10-22 "Tempo / Threshold Run" 8.5 58.0 --hr 160
   python3 fit.py log-rr pull=5,4,4 squat="5,5,5 (/leg)" dip=6,5,5 --notes "felt good"
@@ -479,7 +480,7 @@ def health_summary_txt(h):
 
 # Private data repo sync (same repo and merge rules as the web app) ----------
 
-LOG_KEYS = ("rrSessions", "weightLog", "runLog")
+LOG_KEYS = ("rrSessions", "weightLog", "runLog", "dailyLog")
 
 
 def now_iso():
@@ -616,6 +617,205 @@ def cmd_pull(args):
     print(f"replaced data.json with {args.repo}'s copy (previous copy saved as data.json.bak)")
 
 
+# Apple Health -> data.json -------------------------------------------------
+# Both sources produce the same normalized "health day": full exports
+# (`import-health`) and the iPhone Shortcut (inbox/*.json in the data repo,
+# merged by its GitHub Action via `ingest-inbox`). Imports are idempotent.
+
+def _num(v):
+    """78.9 / '78.9 kg' / '8,02 km' -> float; anything else -> None (Shortcuts sends text with units)."""
+    if v is None or v == "" or isinstance(v, bool):
+        return None
+    if isinstance(v, (int, float)):
+        return float(v)
+    m = re.search(r"-?\d+(?:[.,]\d+)?", str(v))
+    return float(m.group(0).replace(",", ".")) if m else None
+
+
+DAY_FIELDS = ("weightKg", "restingHr", "steps", "activeKcal", "sleepH", "vo2")
+DAILY_FIELDS = ("restingHr", "steps", "activeKcal", "sleepH", "vo2")
+
+
+def normalize_health_day(p):
+    date = str(p.get("date") or "")[:10]
+    if not re.match(r"^\d{4}-\d{2}-\d{2}$", date):
+        raise ValueError(f"bad or missing date: {p.get('date')!r}")
+    day = {"date": date, "runs": []}
+    for key in DAY_FIELDS:
+        v = _num(p.get(key))
+        if v is not None and v > 0:
+            day[key] = v
+    raw = p.get("runs") or []
+    if isinstance(raw, str):  # Shortcut text form: one "km|minutes[|kcal]" per line
+        raw = [line for line in raw.splitlines() if line.strip()]
+    for r in raw:
+        if isinstance(r, str):
+            parts = [x.strip() for x in r.split("|")]
+            r = dict(zip(("km", "min", "kcal"), parts))
+        km, mins = _num(r.get("km")), _num(r.get("min"))
+        if mins is None and _num(r.get("sec")):
+            mins = _num(r.get("sec")) / 60
+        if not km or not mins:
+            continue
+        if km > 100:  # metres
+            km /= 1000
+        if mins > 400:  # seconds
+            mins /= 60
+        run = {"km": round(km, 2), "min": round(mins, 1)}
+        for k in ("hr", "maxHr", "power", "kcal"):
+            v = _num(r.get(k))
+            if v:
+                run[k] = round(v)
+        day["runs"].append(run)
+    return day
+
+
+def classify_run(r):
+    hr = r.get("hr")
+    if r["km"] >= 9.5:
+        return "Long Aerobic Run"
+    if hr and hr <= 148:
+        return "Easy Run (Zone 2)"
+    if hr and hr >= 155:
+        return "Tempo / Threshold Run"
+    return "Aerobic Run"
+
+
+def apply_health_day(data, day, now=None):
+    """Merge one normalized health day into data. Returns a list of change descriptions."""
+    now = now or now_iso()
+    d = day["date"]
+    changes = []
+    for k in LOG_KEYS:
+        data.setdefault(k, [])
+    deleted = data.get("deleted") or {}
+
+    def upsert(key, entry, fields):
+        cur = next((e for e in data[key] if e.get("id") == entry["id"]), None)
+        if cur is None:
+            if entry["id"] in deleted:  # deleted by the user: don't bring it back
+                return
+            entry["updatedAt"] = now
+            data[key].append(entry)
+            changes.append(f"+ {key} {d}")
+            return
+        diff = {f: entry[f] for f in fields if f in entry and cur.get(f) != entry[f]}
+        if diff:
+            cur.update(diff)
+            cur["updatedAt"] = now
+            changes.append(f"~ {key} {d} {sorted(diff)}")
+
+    # Weight: a weigh-in the user logged by hand that day always wins.
+    if "weightKg" in day and not any(
+            w.get("date") == d and not str(w.get("id")).startswith("w-hk-") for w in data["weightLog"]):
+        upsert("weightLog", {"id": f"w-hk-{d}", "date": d, "kg": round(day["weightKg"], 1), "kcal": None,
+                             "source": "Apple Health"}, ["kg"])
+
+    daily = {k: day[k] for k in DAILY_FIELDS if k in day}
+    if daily:
+        entry = {"id": f"d-{d}", "date": d}
+        entry.update({k: (round(v, 1) if k in ("sleepH", "vo2") else int(round(v))) for k, v in daily.items()})
+        upsert("dailyLog", entry, list(daily))
+
+    for r in day["runs"]:
+        same = [x for x in data["runLog"] if x.get("date") == d and abs(float(x.get("km") or 0) - r["km"]) < 0.3]
+        if any(not str(x.get("id")).startswith("r-hk-") for x in same):
+            continue  # already logged by hand
+        rid = same[0]["id"] if same else f"r-hk-{d}-{int(round(r['km'] * 100))}"
+        entry = {"id": rid, "date": d, "type": classify_run(r), "km": r["km"], "min": r["min"],
+                 "notes": "Imported from Apple Health"}
+        entry.update({k: r[k] for k in ("hr", "maxHr", "power", "kcal") if k in r})
+        upsert("runLog", entry, ["km", "min", "hr", "maxHr", "power", "kcal"])
+    return changes
+
+
+def health_days_from_export(path, since):
+    """Normalized health days from a full Export.xml or the export .zip."""
+    import zipfile
+    if path.lower().endswith(".zip"):
+        with zipfile.ZipFile(path) as zf:
+            name = next(n for n in zf.namelist() if n.endswith("/Export.xml") or n == "Export.xml")
+            with zf.open(name) as fh:
+                h = parse_health(fh, since)
+    else:
+        h = parse_health(path, since)
+    p = h["points"]
+    days = {}
+    for d in sorted(set(h["daily"]) | set(h["activity"]) | set(h["sleep"])):
+        dd = h["daily"].get(d, {})
+        act = h["activity"].get(d)
+        raw = {
+            "date": d,
+            "weightKg": p.get(HK + "BodyMass", {}).get(d),
+            "restingHr": p.get(HK + "RestingHeartRate", {}).get(d),
+            "vo2": p.get(HK + "VO2Max", {}).get(d),
+            "steps": best_source(dd.get(HK + "StepCount", {})) or None,
+            "activeKcal": float(act["activeEnergyBurned"]) if act and act.get("activeEnergyBurned")
+            else best_source(dd.get(HK + "ActiveEnergyBurned", {})) or None,
+            "sleepH": h["sleep"].get(d),
+            "runs": [],
+        }
+        days[d] = raw
+    for w in h["workouts"]:
+        if w.get("workoutActivityType") != "HKWorkoutActivityTypeRunning":
+            continue
+        d = w.get("startDate", "")[:10]
+        st = {k.replace(HK, ""): v for k, v in w["stats"].items()}
+        g = lambda t, k: (st.get(t) or {}).get(k)  # noqa: E731
+        days.setdefault(d, {"date": d, "runs": []})["runs"].append({
+            "km": g("DistanceWalkingRunning", "sum"), "min": w.get("duration"),
+            "hr": g("HeartRate", "average"), "maxHr": g("HeartRate", "maximum"),
+            "power": g("RunningPower", "average"), "kcal": g("ActiveEnergyBurned", "sum"),
+        })
+    return [normalize_health_day(days[d]) for d in sorted(days)]
+
+
+def cmd_import_health(args):
+    auto_sync(args, "before")
+    data = load_data()
+    changes = []
+    for day in health_days_from_export(os.path.expanduser(args.export), args.since):
+        changes += apply_health_day(data, day)
+    if changes:
+        save_data(data)
+    print(f"{len(changes)} change(s) from Apple Health since {args.since}")
+    for c in changes:
+        print("  " + c)
+    auto_sync(args, "after")
+
+
+def cmd_ingest_inbox(args):
+    """Merge inbox/*.json (from the iPhone Shortcut) into data.json; used by the data repo's Action."""
+    global DATA_PATH
+    DATA_PATH = os.path.abspath(args.data)
+    data = load_data()
+    changes, done = [], []
+    failed_dir = os.path.join(args.inbox, "failed")
+    for name in sorted(os.listdir(args.inbox)):
+        path = os.path.join(args.inbox, name)
+        if not name.endswith(".json") or not os.path.isfile(path):
+            continue
+        try:
+            with open(path, encoding="utf-8") as f:
+                payload = json.load(f)
+            for p in payload if isinstance(payload, list) else [payload]:
+                changes += apply_health_day(data, normalize_health_day(p))
+            os.remove(path)
+            done.append(name)
+        except (ValueError, KeyError, TypeError) as e:
+            os.makedirs(failed_dir, exist_ok=True)
+            os.replace(path, os.path.join(failed_dir, name))
+            print(f"rejected {name}: {e}", file=sys.stderr)
+    if changes:
+        save_data(data)
+        if args.log:
+            with open(args.log, "w", encoding="utf-8") as f:
+                f.write(workout_log_md(data))
+    print(f"ingested {len(done)} file(s), {len(changes)} change(s)")
+    for c in changes:
+        print("  " + c)
+
+
 def cmd_health(args):
     h = parse_health(os.path.expanduser(args.export_xml), args.since)
     write(os.path.join(OUT_DIR, "daily_breakdown.txt"), daily_breakdown_txt(h))
@@ -632,6 +832,19 @@ def main(argv=None):
     g.add_argument("--copy-to", help="also copy WORKOUT_LOG.md into this folder (e.g. Obsidian vault)")
     g.add_argument("--apple-calendar", action="store_true", help="replace FIT: events in macOS Calendar")
     g.set_defaults(func=cmd_generate)
+
+    ih = sub.add_parser("import-health", help="import runs, weigh-ins and daily metrics from a Health export (.zip or Export.xml)")
+    ih.add_argument("export")
+    ih.add_argument("--since", default=(date.today() - timedelta(days=14)).isoformat())
+    ih.add_argument("--repo", default=DATA_REPO, help="private data repo (env FIT_DATA_REPO)")
+    ih.add_argument("--offline", action="store_true", help="don't auto-sync with the private repo")
+    ih.set_defaults(func=cmd_import_health)
+
+    ib = sub.add_parser("ingest-inbox", help="(data repo Action) merge inbox/*.json from the iPhone Shortcut")
+    ib.add_argument("--data", default="data.json")
+    ib.add_argument("--inbox", default="inbox")
+    ib.add_argument("--log", help="also rewrite this WORKOUT_LOG.md")
+    ib.set_defaults(func=cmd_ingest_inbox)
 
     h = sub.add_parser("health", help="summarise an Apple Health Export.xml")
     h.add_argument("export_xml")

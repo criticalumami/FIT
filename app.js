@@ -38,6 +38,7 @@
     rrSessions: [],
     weightLog: [],
     runLog: [],
+    dailyLog: [], // Apple Health daily metrics (restingHr, steps, sleepH, activeKcal, vo2), via fit.py / Shortcut
     schedule: PROGRAM.defaultSchedule,
     programNotes: PROGRAM.defaultProgramNotes,
     deleted: {},
@@ -188,6 +189,35 @@
     return sorted[sorted.length - 1];
   }
 
+  // Latest Apple Health day vs the 14 days before it.
+  function healthBoxHtml() {
+    const days = [...(state.dailyLog || [])].sort((a, b) => a.date.localeCompare(b.date));
+    if (!days.length) return '';
+    const last = days[days.length - 1];
+    const lastDay = L.isoToDay(last.date);
+    const prior = days.filter(d => { const n = L.isoToDay(d.date); return n < lastDay && n >= lastDay - 14; });
+    const avg = key => {
+      const v = prior.map(d => d[key]).filter(x => x != null);
+      return v.length ? v.reduce((a, b) => a + b, 0) / v.length : null;
+    };
+    const rhrAvg = avg('restingHr');
+    const rhrDelta = last.restingHr != null && rhrAvg != null ? last.restingHr - rhrAvg : null;
+    const lines = [];
+    if (last.restingHr != null) {
+      lines.push(`RHR ${esc(last.restingHr)} bpm${rhrAvg != null ? ` (14d avg ${rhrAvg.toFixed(0)})` : ''}`);
+    }
+    if (last.sleepH != null) lines.push(`Sleep ${Number(last.sleepH).toFixed(1)} h`);
+    if (last.steps != null) lines.push(`${Math.round(last.steps).toLocaleString()} steps`);
+    const warn = rhrDelta != null && rhrDelta >= 5
+      ? `<br><strong>! RHR +${rhrDelta.toFixed(0)} vs normal: consider an easy day</strong>` : '';
+    return `
+      <div class="stat-box">
+        <div class="stat-label">Apple Health (${esc(last.date.slice(5))})</div>
+        <div class="stat-val">${last.restingHr != null ? esc(last.restingHr) + ' bpm' : '-'}</div>
+        <div class="stat-sub">${lines.join(' | ')}${warn}</div>
+      </div>`;
+  }
+
   function trendLine(t) {
     if (!t || t.ratePerWeek == null) return 'Rate: need 2+ weigh-ins';
     const maxPct = state.meta.maxLossPctPerWeek || 1.0;
@@ -261,7 +291,7 @@
         <div class="stat-sub">Your history isn't published with the site. Load your <code>data.json</code> once per browser:
           <button type="button" class="btn-inline" data-goto-tab="sync">6:sync -&gt; Load file</button></div>
       </div>` : '';
-    document.getElementById('dashboard-kpis').innerHTML = emptyHtml + kpiHtml;
+    document.getElementById('dashboard-kpis').innerHTML = emptyHtml + kpiHtml + healthBoxHtml();
 
     // ASCII Progress Bar
     const barWidth = 28;

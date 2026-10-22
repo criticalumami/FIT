@@ -195,7 +195,7 @@
    *   side with the later settingsUpdatedAt; ties go to `local`, unless local
    *   has no entries at all and remote does (an empty browser never wins).
    */
-  const LOG_KEYS = ['rrSessions', 'weightLog', 'runLog'];
+  const LOG_KEYS = ['rrSessions', 'weightLog', 'runLog', 'dailyLog'];
 
   // JSON with sorted keys, for "did anything actually change?" comparisons.
   function stableStringify(v) {
