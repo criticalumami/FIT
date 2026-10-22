@@ -622,17 +622,38 @@ def cmd_pull(args):
 # (`import-health`) and the iPhone Shortcut (inbox/*.json in the data repo,
 # merged by its GitHub Action via `ingest-inbox`). Imports are idempotent.
 
-def _num(v):
-    """78.9 / '78.9 kg' / '8,02 km' -> float; anything else -> None (Shortcuts sends text with units)."""
+def _num(v, integer=False):
+    """Number from Shortcuts text in any locale -> float, else None.
+
+    '78,9 kg' -> 78.9, '29.376 Schritte' -> 29376 (integer field), '12 345' -> 12345,
+    '1,234.5' -> 1234.5. `integer` marks fields that are never fractional (steps,
+    kcal, bpm), so a lone '.'/',' followed by exactly three digits is a thousands
+    separator there, and a decimal separator elsewhere.
+    """
     if v is None or v == "" or isinstance(v, bool):
         return None
     if isinstance(v, (int, float)):
         return float(v)
-    m = re.search(r"-?\d+(?:[.,]\d+)?", str(v))
-    return float(m.group(0).replace(",", ".")) if m else None
+    m = re.search(r"-?\d[\d.,'\s\u00a0\u202f]*", str(v))
+    if not m:
+        return None
+    t = re.sub(r"[\s\u00a0\u202f']", "", m.group(0)).rstrip(".,")
+    if "," in t and "." in t:  # the later separator is the decimal one
+        t = t.replace(".", "").replace(",", ".") if t.rfind(",") > t.rfind(".") else t.replace(",", "")
+    elif "," in t or "." in t:
+        sep = "," if "," in t else "."
+        if integer and re.fullmatch(r"-?\d{1,3}(?:" + re.escape(sep) + r"\d{3})+", t):
+            t = t.replace(sep, "")
+        else:
+            t = t.replace(",", ".")
+    try:
+        return float(t)
+    except ValueError:
+        return None
 
 
 DAY_FIELDS = ("weightKg", "restingHr", "steps", "activeKcal", "sleepH", "vo2")
+INTEGER_FIELDS = {"restingHr", "steps", "activeKcal", "hr", "maxHr", "power", "kcal"}
 DAILY_FIELDS = ("restingHr", "steps", "activeKcal", "sleepH", "vo2")
 
 
@@ -642,7 +663,7 @@ def normalize_health_day(p):
         raise ValueError(f"bad or missing date: {p.get('date')!r}")
     day = {"date": date, "runs": []}
     for key in DAY_FIELDS:
-        v = _num(p.get(key))
+        v = _num(p.get(key), key in INTEGER_FIELDS)
         if v is not None and v > 0:
             day[key] = v
     raw = p.get("runs") or []
@@ -663,7 +684,7 @@ def normalize_health_day(p):
             mins /= 60
         run = {"km": round(km, 2), "min": round(mins, 1)}
         for k in ("hr", "maxHr", "power", "kcal"):
-            v = _num(r.get(k))
+            v = _num(r.get(k), integer=True)
             if v:
                 run[k] = round(v)
         day["runs"].append(run)

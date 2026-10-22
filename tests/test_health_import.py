@@ -28,6 +28,26 @@ class NormalizeTests(unittest.TestCase):
         self.assertNotIn("activeKcal", day)
         self.assertEqual(day["runs"], [{"km": 8.02, "min": 52.5, "kcal": 600}, {"km": 5.0, "min": 31.0}])
 
+    def test_german_iphone_formats(self):
+        day = fit.normalize_health_day({
+            "date": "2026-10-23", "weightKg": "78,9 kg", "restingHr": "61 Schläge/Min.",
+            "steps": "29.376 Schritte", "activeKcal": "1.576 kcal", "sleepH": "7,0", "vo2": "39,62",
+            "runs": "8,02|52,5|1.020",
+        })
+        self.assertEqual((day["weightKg"], day["restingHr"], day["steps"], day["activeKcal"]), (78.9, 61, 29376, 1576))
+        self.assertEqual((day["sleepH"], day["vo2"]), (7.0, 39.62))
+        self.assertEqual(day["runs"], [{"km": 8.02, "min": 52.5, "kcal": 1020}])
+
+    def test_other_locale_formats(self):
+        n = fit._num
+        self.assertEqual(n("12 345", integer=True), 12345)
+        self.assertEqual(n("12\u202f345 steps", integer=True), 12345)
+        self.assertEqual(n("1,234.5 kcal"), 1234.5)
+        self.assertEqual(n("1.234,5 kcal"), 1234.5)
+        self.assertEqual(n("29,376", integer=True), 29376)
+        self.assertEqual(n("8.020 km"), 8.02)  # decimal field: dot stays decimal
+        self.assertIsNone(n("kein Wert"))
+
     def test_metres_and_seconds_are_converted(self):
         day = fit.normalize_health_day({"date": "2026-10-23", "runs": [{"km": 8020, "sec": 3150}]})
         self.assertEqual(day["runs"], [{"km": 8.02, "min": 52.5}])

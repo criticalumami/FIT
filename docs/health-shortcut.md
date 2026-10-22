@@ -1,61 +1,82 @@
 # iPhone Shortcut: send Apple Health to FIT automatically
 
-Once a day (and after each watch workout, if you like) the Shortcut uploads a small JSON snapshot to `inbox/` in the private `FIT-data` repo. A GitHub Action there merges it into `data.json` within about a minute; the web app and `fit.py` pick it up on their next sync. Your Mac doesn't need to be on.
+*Written for an iPhone set to **German**. Each step gives the German label first and the English one in brackets. If a label differs slightly on your iOS version, type a keyword such as "Health", "Datum" or "URL" into the action search.*
 
-It reuses the **FIT-data token** you already made for the web app (Contents read & write on `FIT-data` only).
+Once a day (and after each watch workout, if you like) the Shortcut uploads a small snapshot to `inbox/` in the private `FIT-data` repo. A GitHub Action there merges it into `data.json` within about a minute; the web app and `fit.py` pick it up on their next sync. Your Mac doesn't need to be on.
 
-## Build the Shortcut (Shortcuts app → +)
+It reuses the **FIT-data token** you already made for the web app (Contents read & write on `FIT-data` only). German number formats such as `78,9 kg` or `29.376 Schritte` are understood.
 
-Name it **FIT Health Sync**. Add these actions in order:
+## Build the Shortcut
 
-1. **Find Health Samples**: Type **Weight**, Start Date **is today**, Sort by **Start Date**, Order **Latest First**, Limit **1**. Tap the result variable → rename to `Weight`.
-2. **Find Health Samples**: Type **Resting Heart Rate**, Start Date **is today**, Latest First, Limit **1** → rename `RHR`.
-3. **Find Health Samples**: Type **Steps**, Start Date **is today**, **Group By: Day** → rename `Steps`.
-4. **Find Health Samples**: Type **Active Energy**, Start Date **is today**, **Group By: Day** → rename `ActiveKcal`.
-5. **Date** (Current Date) → **Format Date**: Custom, `yyyy-MM-dd` → rename `Today`.
-6. **Dictionary** with these Text keys:
-   | Key | Value |
+Open **Kurzbefehle** (Shortcuts) → **+**. Name it **FIT Health Sync**.
+
+To rename a result: tap the blue result variable of an action → **Umbenennen** (Rename).
+
+1. **Health-Messwerte suchen** (Find Health Samples)
+   - Typ: **Gewicht** (Weight)
+   - Filter: **Startdatum** · **ist heute** (Start Date is today)
+   - **Sortieren nach**: Startdatum · **Reihenfolge**: Neueste zuerst (Latest First)
+   - **Begrenzen** (Limit) on, **1**
+   - Rename the result to `Weight`
+2. **Health-Messwerte suchen**: Typ **Ruheherzfrequenz** (Resting Heart Rate), Startdatum ist heute, Neueste zuerst, Begrenzen **1** → rename `RHR`
+3. **Health-Messwerte suchen**: Typ **Schritte** (Steps), Startdatum ist heute, **Gruppieren nach: Tag** (Group By: Day) → rename `Steps`
+4. **Health-Messwerte suchen**: Typ **Aktive Energie** (Active Energy), Startdatum ist heute, Gruppieren nach: Tag → rename `ActiveKcal`
+5. **Datum** (Date): **Aktuelles Datum** (Current Date), then **Datum formatieren** (Format Date):
+   - Datumsformat: **Eigenes** (Custom), format `yyyy-MM-dd` (type it exactly, including capital MM)
+   - Rename the result to `Today`
+6. **Wörterbuch** (Dictionary). Add each entry with **Text** as the type:
+
+   | Schlüssel (Key) | Wert (Value) |
    | :-- | :-- |
    | `date` | `Today` |
    | `weightKg` | `Weight` |
    | `restingHr` | `RHR` |
    | `steps` | `Steps` |
    | `activeKcal` | `ActiveKcal` |
-7. **Get Text from Input** (input: Dictionary).
-8. **Base64 Encode** (input: Text), Line Breaks: **None**.
-9. **Date** (Current Date) → **Format Date**: Custom, `yyyy-MM-dd-HHmmss` → rename `Stamp`.
-10. **Get Contents of URL**:
-    - URL: `https://api.github.com/repos/criticalumami/FIT-data/contents/inbox/Stamp.json` (insert the `Stamp` variable where it says Stamp)
-    - Method: **PUT**
-    - Headers: `Authorization` = `Bearer ` followed by your FIT-data token; `Accept` = `application/vnd.github+json`
-    - Request Body: **JSON**, fields `message` (Text) = `Health from iPhone`, `content` (Text) = **Base64 Encoded**
 
-Run it once by hand and allow the Health and network permissions. Within a minute, the web app's dashboard shows an **Apple Health** box (open it or switch back to it to sync).
+   Type the keys exactly as shown (in English). They're the field names FIT reads.
+7. **Text aus Eingabe abrufen** (Get Text from Input). Input: Wörterbuch.
+8. **Base64-Codierung** (Base64 Encode). Modus **Codieren** (Encode), **Zeilenumbrüche: Keine** (Line Breaks: None).
+9. **Datum** → **Aktuelles Datum** → **Datum formatieren**: Eigenes, `yyyy-MM-dd-HHmmss` → rename `Stamp`
+10. **Inhalte von URL abrufen** (Get Contents of URL):
+    - URL: `https://api.github.com/repos/criticalumami/FIT-data/contents/inbox/Stamp.json`. Replace the word Stamp with the `Stamp` variable: tap at that spot and pick it.
+    - Tap **Mehr anzeigen** (Show More):
+    - **Methode** (Method): **PUT**
+    - **Header** (Headers):
+      - `Authorization` → `Bearer ` (with the space) followed by your FIT-data token
+      - `Accept` → `application/vnd.github+json`
+    - **Hauptteil der Anfrage** (Request Body): **JSON**
+      - `message` (Text) → `Health from iPhone`
+      - `content` (Text) → the **Base64-codiert** (Base64 Encoded) variable from step 8
+
+Tap ▶ to run it once. Allow the Health access (**Erlauben** / **Alle aktivieren**) and the network request. Within a minute, the web app's dashboard shows an **Apple Health** box (open it, or switch back to it, to sync).
 
 Missing values are fine: if you didn't weigh in, `weightKg` is just empty and is skipped.
 
-## Make it automatic (Shortcuts → Automation → +)
+## Make it automatic
 
-- **Time of Day** → 21:30, Daily → **Run Immediately** → FIT Health Sync.
-- Optional: **Apple Watch Workout** → When workout **ends** → **Run Immediately** → FIT Health Sync.
+**Kurzbefehle** → **Automation** → **+** (Neue Automation / New Automation):
+
+- **Tageszeit** (Time of Day) → 21:30 → **Täglich** (Daily) → **Sofort ausführen** (Run Immediately) → choose **FIT Health Sync**.
+- Optional: **Apple Watch-Training** (Apple Watch Workout) → **Endet** (Ends) → **Sofort ausführen** → **FIT Health Sync**.
 
 ## Runs
 
-Watch runs come in through the full-export import with complete heart-rate and power data. Run this on the Mac after exporting from the Health app:
+Watch runs come in through the full-export import with complete heart-rate and power data. In the Health app: profile picture → **Alle Health-Daten exportieren** (Export All Health Data), send the zip to the Mac, then:
 
 ```bash
 python3 fit.py import-health ~/Downloads/Export.zip
 ```
 
-To have the Shortcut send runs too, add a `runs` key with Text value, one run per line as `km|minutes|kcal` (e.g. `8.02|52.5|600`). The importer merges them with later exports, without duplicates.
+To have the Shortcut send runs too, add a `runs` key (Text) to the Wörterbuch, one run per line as `km|minutes|kcal` (e.g. `8,02|52,5|600`). Runs merge with later exports, without duplicates.
 
 ## Payload reference
 
-Values may be numbers or text with units ("78.9 kg", "61 count/min"); the importer extracts the number.
+Values may be numbers or text with units, in German or English formatting ("78,9 kg", "29.376 Schritte", "61 count/min"); the importer extracts the number.
 
 ```json
-{"date": "2026-10-23", "weightKg": "78.9 kg", "restingHr": 61, "steps": 24000, "activeKcal": 1200,
- "sleepH": 7.1, "vo2": 39.8, "runs": "8.02|52.5|600"}
+{"date": "2026-10-23", "weightKg": "78,9 kg", "restingHr": "61", "steps": "29.376", "activeKcal": "1.576",
+ "sleepH": "7,1", "vo2": "39,8", "runs": "8,02|52,5|600"}
 ```
 
 Files the Action can't read are moved to `inbox/failed/` in the data repo instead of being lost.
