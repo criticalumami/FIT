@@ -60,7 +60,15 @@ python3 fit.py log-run 2026-10-22 "Tempo / Threshold Run" 8.5 58.0 --hr 160
 python3 fit.py log-rr pull=5,4,4 squat="5,5,5 (/leg)" dip=6,5,5 hinge=9,9,9 row=8,7,7 push=5,4,4 --notes "felt good"
 ```
 
-**Apple Health:** export from the Health app, unzip into `health_export/`, then:
+**Apple Health, automatic:** an iPhone Shortcut sends a daily snapshot (weight, resting HR, steps, active energy) to the data repo, where an Action merges it into `data.json`. Setup: [docs/health-shortcut.md](docs/health-shortcut.md).
+
+**Apple Health, from a full export** (adds runs with HR/power, weigh-ins and daily metrics; safe to re-run):
+
+```bash
+python3 fit.py import-health ~/Downloads/Export.zip
+```
+
+For the summary text files, unzip the export into `health_export/`, then:
 
 ```bash
 python3 fit.py health health_export/apple_health_export/Export.xml --since 2026-08-25
