@@ -753,13 +753,16 @@ def apply_health_day(data, day, now=None):
 def health_days_from_export(path, since):
     """Normalized health days from a full Export.xml or the export .zip."""
     import zipfile
+    # Read one extra day: a night's sleep starts the evening before it is counted,
+    # so the first day of the window would otherwise get only part of it.
+    read_from = (date.fromisoformat(since) - timedelta(days=1)).isoformat()
     if path.lower().endswith(".zip"):
         with zipfile.ZipFile(path) as zf:
             name = next(n for n in zf.namelist() if n.endswith("/Export.xml") or n == "Export.xml")
             with zf.open(name) as fh:
-                h = parse_health(fh, since)
+                h = parse_health(fh, read_from)
     else:
-        h = parse_health(path, since)
+        h = parse_health(path, read_from)
     p = h["points"]
     days = {}
     for d in sorted(set(h["daily"]) | set(h["activity"]) | set(h["sleep"])):
@@ -788,10 +791,13 @@ def health_days_from_export(path, since):
             "hr": g("HeartRate", "average"), "maxHr": g("HeartRate", "maximum"),
             "power": g("RunningPower", "average"), "kcal": g("ActiveEnergyBurned", "sum"),
         })
-    return [normalize_health_day(days[d]) for d in sorted(days)]
+    return [normalize_health_day(days[d]) for d in sorted(days) if d >= since]
 
 
 def cmd_import_health(args):
+    global DATA_PATH
+    if args.data:
+        DATA_PATH = os.path.abspath(args.data)
     auto_sync(args, "before")
     data = load_data()
     changes = []
@@ -799,6 +805,9 @@ def cmd_import_health(args):
         changes += apply_health_day(data, day)
     if changes:
         save_data(data)
+        if args.log:
+            with open(args.log, "w", encoding="utf-8") as f:
+                f.write(workout_log_md(data))
     print(f"{len(changes)} change(s) from Apple Health since {args.since}")
     for c in changes:
         print("  " + c)
@@ -859,6 +868,8 @@ def main(argv=None):
     ih.add_argument("--since", default=(date.today() - timedelta(days=14)).isoformat())
     ih.add_argument("--repo", default=DATA_REPO, help="private data repo (env FIT_DATA_REPO)")
     ih.add_argument("--offline", action="store_true", help="don't auto-sync with the private repo")
+    ih.add_argument("--data", help="data.json to update (default: the one next to fit.py)")
+    ih.add_argument("--log", help="also rewrite this WORKOUT_LOG.md")
     ih.set_defaults(func=cmd_import_health)
 
     ib = sub.add_parser("ingest-inbox", help="(data repo Action) merge inbox/*.json from the iPhone Shortcut")
