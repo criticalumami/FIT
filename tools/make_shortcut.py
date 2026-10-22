@@ -4,14 +4,16 @@
     python3 tools/make_shortcut.py && shortcuts sign --mode anyone \
         --input "shortcuts/FIT Upload.unsigned.shortcut" --output "shortcuts/FIT Upload.shortcut"
 
-The token is never stored here: Shortcuts asks for it when the shortcut is added
-(import question on the first Text action).
+The token is never stored here: after adding the shortcut, paste it into the
+first Text action (placeholder below). No import question: those made the
+"Add Shortcut" step hang.
 """
 import os
 import plistlib
 import uuid
 
 REPO = "criticalumami/FIT-data"
+TOKEN_PLACEHOLDER = "HIER_TOKEN_EINFUEGEN"
 INBOX_RELEASE_ID = 421090352  # release tagged `inbox` in FIT-data
 OUT = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
                    "shortcuts", "FIT Upload.unsigned.shortcut")
@@ -40,7 +42,7 @@ github_json = ("Accept", text("application/vnd.github+json"))
 
 actions = [
     {"WFWorkflowActionIdentifier": "is.workflow.actions.gettext",
-     "WFWorkflowActionParameters": {"UUID": token_uuid, "WFTextActionText": ""}},
+     "WFWorkflowActionParameters": {"UUID": token_uuid, "WFTextActionText": TOKEN_PLACEHOLDER}},
     {"WFWorkflowActionIdentifier": "is.workflow.actions.downloadurl",
      "WFWorkflowActionParameters": {
          "UUID": uid(),
@@ -78,14 +80,9 @@ workflow = {
     "WFWorkflowTypes": ["ActionExtension"],  # appears in the share sheet
     "WFWorkflowInputContentItemClasses": ["WFGenericFileContentItem"],
     "WFWorkflowHasShortcutInputVariables": True,
-    "WFWorkflowNoInputBehavior": {"Name": "WFWorkflowNoInputBehaviorAskForInput",
-                                  "Parameters": {"ItemClass": "WFGenericFileContentItem"}},
     "WFWorkflowOutputContentItemClasses": [],
     "WFQuickActionSurfaces": [],
-    "WFWorkflowImportQuestions": [{
-        "ActionIndex": 0, "Category": "Parameter", "ParameterKey": "WFTextActionText", "DefaultValue": "",
-        "Text": "Füge deinen FIT-data GitHub-Token ein (beginnt mit github_pat_). / Paste your FIT-data GitHub token.",
-    }],
+    "WFWorkflowImportQuestions": [],
     "WFWorkflowActions": actions,
 }
 
