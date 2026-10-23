@@ -5,7 +5,8 @@
 **Install once (1 minute):**
 
 1. On your iPhone, open [FIT Upload.shortcut](https://github.com/criticalumami/FIT/raw/main/shortcuts/FIT%20Upload.shortcut), or open the same file on your Mac (it syncs to the iPhone through iCloud).
-2. Tap **Kurzbefehl hinzufügen** (Add Shortcut). When asked, paste your **FIT-data token** (`github_pat_…`, the same one the web app uses). Adding can take a few seconds.
+2. Tap **Kurzbefehl hinzufügen** (Add Shortcut).
+3. Open the shortcut (**…** on its tile). In the first box, replace `HIER_TOKEN_EINFUEGEN` with your **FIT-data token** (`github_pat_…`, the same one the web app uses). Tap **Fertig**.
 
 **Each time you want to update (4 taps, e.g. after your Saturday long run):**
 
