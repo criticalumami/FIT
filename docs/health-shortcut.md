@@ -5,15 +5,14 @@
 **Install once (1 minute):**
 
 1. On your iPhone, open [FIT Upload.shortcut](https://github.com/criticalumami/FIT/raw/main/shortcuts/FIT%20Upload.shortcut), or open the same file on your Mac (it syncs to the iPhone through iCloud).
-2. Tap **Kurzbefehl hinzufügen** (Add Shortcut).
-3. Open the shortcut (tap **…** on its tile). In the first box, replace `HIER_TOKEN_EINFUEGEN` with your **FIT-data token** (`github_pat_…`, the same one the web app uses). Tap **Fertig**.
+2. Tap **Kurzbefehl hinzufügen** (Add Shortcut). When asked, paste your **FIT-data token** (`github_pat_…`, the same one the web app uses). Adding can take a few seconds.
 
 **Each time you want to update (4 taps, e.g. after your Saturday long run):**
 
 1. **Health** app → your profile picture (top right) → **Alle Health-Daten exportieren** (Export All Health Data) → **Exportieren**.
 2. In the share sheet, pick **FIT Upload**.
 
-That's it. The shortcut uploads the export to the private `FIT-data` repo, and a GitHub Action imports the last 60 days: runs with heart rate and power, weigh-ins, sleep, resting heart rate and steps. You'll get a notification; the web app shows the new data after its next sync (open it or switch back to it). Nothing is duplicated, and entries you logged by hand always win.
+That's it. The shortcut uploads the export to the private `FIT-data` repo, and a GitHub Action imports the last 60 days: runs with heart rate and power, weigh-ins, sleep, resting heart rate and steps. The notification shows GitHub's answer: **"Upload: uploaded (… Bytes)"** means it worked; anything else is the error (e.g. "Bad credentials" = token wrong or revoked). If you start the shortcut without a file, it asks you to pick the export. The web app shows the new data after its next sync (open it or switch back to it). Nothing is duplicated, and entries you logged by hand always win.
 
 If **FIT Upload** doesn't appear in the share sheet: scroll the app row to the end → **Mehr** (More) → enable it, or tap **Aktionen bearbeiten** at the bottom of the share sheet and add it to Favorites.
 
