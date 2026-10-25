@@ -513,6 +513,17 @@
       }).join('');
 
       const cuesHtml = ex.cues.map(c => `<li>- ${esc(c)}</li>`).join('');
+      const guideHref = ex.category === 'skill' ? 'skill-guide.html' : 'form-guide.html';
+      const artHtml = Array.isArray(ex.art) && ex.art.length
+        ? `<div class="ex-art-strip">${ex.art.map(item => `
+            <a class="ex-art-card" href="${guideHref}" target="_blank" rel="noopener" title="Open full illustrated manual">
+              <div class="ex-art-img-wrap">
+                <img src="${esc(item.src)}" alt="${esc(item.label)}" loading="lazy" fetchpriority="low">
+              </div>
+              <span class="ex-art-caption">${esc(item.label)}</span>
+            </a>
+          `).join('')}</div>`
+        : '';
 
       return `
         <div class="tile col-6">
@@ -521,6 +532,7 @@
             <span class="meta">Target: ${esc(ex.targetRange)}</span>
           </div>
           <div class="tile-body">
+            ${artHtml}
             <h4>Bodyweight Progression Ladder</h4>
             <ul class="ladder-list">${ladderHtml}</ul>
 

@@ -48,9 +48,12 @@ jobs:
       - name: Build site
         run: |
           python3 generate_rr_complete_pdf.py --html-only
+          python3 generate_skill_day_pdf.py --html-only
           mkdir -p _site
           cp index.html style.css app.js lib.js program.js .nojekyll _site/
+          cp -r assets _site/assets
           cp generated/rr_complete_form_guide.html _site/form-guide.html
+          cp generated/skill_day_form_guide.html _site/skill-guide.html
           # Cache-bust assets and stamp the build id; open tabs compare it and reload when stale.
           V="${GITHUB_SHA::7}"
           sed -i -E \

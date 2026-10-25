@@ -7,6 +7,10 @@ window.FIT_PROGRAM = {
       "slot": "Pair 1A: Pull",
       "category": "pair1",
       "targetRange": "3 x 5-8",
+      "art": [
+        { "src": "assets/art/pull_hang.jpg", "label": "L1-L3: Arch Hang & Negatives" },
+        { "src": "assets/art/pull_up.jpg", "label": "L4-L6: Strict Pull-Up / Chin-Up" }
+      ],
       "ladders": [
         "L1: Scapular Pulls / Dead Hangs",
         "L2: Arch Hangs",
@@ -31,6 +35,10 @@ window.FIT_PROGRAM = {
       "slot": "Pair 1B: Squat",
       "category": "pair1",
       "targetRange": "3 x 5-8 (/leg)",
+      "art": [
+        { "src": "assets/art/squat_split.jpg", "label": "L3-L4: Sofa Step-Up & Split Squat" },
+        { "src": "assets/art/squat_pistol.jpg", "label": "L5-L6: Shrimp & Pistol Squat" }
+      ],
       "ladders": [
         "L1: Assisted Squat",
         "L2: Full Depth Bodyweight Squat",
@@ -55,6 +63,10 @@ window.FIT_PROGRAM = {
       "slot": "Pair 2A: Dip",
       "category": "pair2",
       "targetRange": "3 x 5-8",
+      "art": [
+        { "src": "assets/art/warmup_support.jpg", "label": "L1: Parallel Bar Support Hold" },
+        { "src": "assets/art/dip_bar.jpg", "label": "L2-L5: Parallel Bar Dips (90° Depth)" }
+      ],
       "ladders": [
         "L1: Parallel Bar Support Hold (60s)",
         "L2: Negative Dips (5-8s eccentric)",
@@ -78,6 +90,10 @@ window.FIT_PROGRAM = {
       "slot": "Pair 2B: Hinge",
       "category": "pair2",
       "targetRange": "3 x 8-12",
+      "art": [
+        { "src": "assets/art/hinge_slide.jpg", "label": "L3-L5: Floor Slide Hamstring Curl" },
+        { "src": "assets/art/hinge_rdl.jpg", "label": "L1 & L6: Single-Leg RDL Hinge" }
+      ],
       "ladders": [
         "L1: Romanian Deadlift (Bodyweight / Single-Leg Balance)",
         "L2: Glute Bridge Hold / Marching Bridge",
@@ -102,6 +118,10 @@ window.FIT_PROGRAM = {
       "slot": "Pair 3A: Row",
       "category": "pair3",
       "targetRange": "3 x 8-12",
+      "art": [
+        { "src": "assets/art/row_hang.jpg", "label": "1. Straight-Arm Row Hang" },
+        { "src": "assets/art/row_top.jpg", "label": "2. Chest-to-Bar Retracted Top Hold" }
+      ],
       "ladders": [
         "L1: Incline Rows (45 deg body angle)",
         "L2: Horizontal Inverted Rows (Feet on floor)",
@@ -125,6 +145,10 @@ window.FIT_PROGRAM = {
       "slot": "Pair 3B: Push-Up",
       "category": "pair3",
       "targetRange": "3 x 5-8",
+      "art": [
+        { "src": "assets/art/push_diamond.jpg", "label": "L2-L4: Standard & Diamond Push-Up" },
+        { "src": "assets/art/push_pppu.jpg", "label": "L5-L6: Pseudo Planche Push-Up" }
+      ],
       "ladders": [
         "L1: Incline Push-Up (Hands on sofa)",
         "L2: Full Standard Push-Up (Hollow body)",
@@ -149,6 +173,10 @@ window.FIT_PROGRAM = {
       "slot": "Core 1: Anti-Extension",
       "category": "core",
       "targetRange": "2 x 30-60s / 8-12",
+      "art": [
+        { "src": "assets/art/warmup_hollow.jpg", "label": "0A: Hollow Body Hold (PPT)" },
+        { "src": "assets/art/core_plank.jpg", "label": "L1-L4: Hollow Forearm Plank" }
+      ],
       "ladders": [
         "L1: Forearm Plank (Hollow Body / PPT) 30-60s",
         "L2: Long-Lever Plank (Elbows ahead of eyes)",
@@ -170,6 +198,9 @@ window.FIT_PROGRAM = {
       "slot": "Core 2: Anti-Rotation",
       "category": "core",
       "targetRange": "2 x 15-45s/side",
+      "art": [
+        { "src": "assets/art/core_side_plank.jpg", "label": "L1-L3: Side Plank -> Copenhagen" }
+      ],
       "ladders": [
         "L1: Side Plank (Feet stacked) 15-45s/side",
         "L2: Side Plank with Top Leg Abduction",
@@ -190,6 +221,9 @@ window.FIT_PROGRAM = {
       "slot": "Core 3: Extension",
       "category": "core",
       "targetRange": "2 x 8-12",
+      "art": [
+        { "src": "assets/art/core_arch.jpg", "label": "L1-L3: Prone Arch Hold & Rev Hyper" }
+      ],
       "ladders": [
         "L1: Prone Arch Hold (Superman with straight arms/legs)",
         "L2: Prone Arch Raises (Dynamic 2s hold at top)",
@@ -210,6 +244,12 @@ window.FIT_PROGRAM = {
       "slot": "Sunday Skill: Handstand & Crow",
       "category": "skill",
       "targetRange": "10-15 min quality",
+      "art": [
+        { "src": "assets/art/skill_handstand.jpg", "label": "Chest-to-Wall Handstand" },
+        { "src": "assets/art/skill_heel_pull.jpg", "label": "Wall Heel Pulls" },
+        { "src": "assets/art/skill_crow.jpg", "label": "Crow Pose (Bent Arms)" },
+        { "src": "assets/art/skill_crane.jpg", "label": "Crane Pose (Straight Arms)" }
+      ],
       "ladders": [
         "L1: Wrist Prep + Pike Hold (Feet on sofa)",
         "L2: Crow Pose (Frog Stand) on floor (5 x 15-30s)",
@@ -231,6 +271,12 @@ window.FIT_PROGRAM = {
       "slot": "Sunday Skill: L-Sit & Skin the Cat",
       "category": "skill",
       "targetRange": "60s total / 3x3-5",
+      "art": [
+        { "src": "assets/art/skill_lsit.jpg", "label": "Floor L-Sit Progression" },
+        { "src": "assets/art/skill_pike.jpg", "label": "Seated Pike Leg Lifts" },
+        { "src": "assets/art/skill_skinthecat.jpg", "label": "Skin the Cat Tuck Pass" },
+        { "src": "assets/art/skill_germanhang.jpg", "label": "Controlled German Hang" }
+      ],
       "ladders": [
         "L1: Foot-Supported L-Sit on Floor/Books (60s)",
         "L2: One-Leg Assisted L-Sit (30s/side)",
