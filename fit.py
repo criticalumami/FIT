@@ -365,11 +365,13 @@ def cmd_log_rr(args):
     weights = sorted(data.get("weightLog", []), key=lambda w: w["date"])
     entry = {"id": f"rr-{args.date}", "date": args.date, "bw": args.bw or (weights[-1]["kg"] if weights else None)}
     sets = dict(kv.split("=", 1) for kv in args.sets)
-    slots = {k for _, k in RR_SLOTS}
-    unknown = set(sets) - slots - {f"{k}_step" for k in slots} - {"antiext", "antirot", "ext"}
+    slots = tuple(k for _, k in RR_SLOTS)
+    core = ("antiext", "antirot", "ext")
+    unknown = set(sets) - set(slots) - {f"{k}_step" for k in slots + core} - set(core)
     if unknown:
         sys.exit(f"unknown keys: {', '.join(sorted(unknown))}")
     exercises = {e["id"]: e for e in load_program()["exercises"]}
+    before = dict(active)
     for _, k in RR_SLOTS:
         step = active.get(k, "")
         if f"{k}_step" in sets:
@@ -382,8 +384,13 @@ def cmd_log_rr(args):
         # Logged steps become the current ones, as in the web app.
         if step:
             data.setdefault("activeProgressions", {})[k] = step
-    for k in ("antiext", "antirot", "ext"):
+    for k in core:
         entry[k] = sets.get(k, "")
+        if f"{k}_step" in sets:
+            data.setdefault("activeProgressions", {})[f"core_{k}"] = resolve_step(exercises[f"core_{k}"], sets[f"{k}_step"])
+    if data.get("activeProgressions", {}) != before:
+        # Step changes are settings; stamp them so the merge keeps them over older copies.
+        data["settingsUpdatedAt"] = now_iso()
     entry["notes"] = args.notes or ""
     entry["updatedAt"] = now_iso()
     data.setdefault("rrSessions", [])

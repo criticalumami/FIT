@@ -123,7 +123,7 @@ class FitTests(unittest.TestCase):
             fit.DATA_PATH = path
             try:
                 fit.main(["log-rr", "pull=5,5,4", "squat=5,5,5", "squat_step=L4", "push=8,8,7", "push_step=full standard",
-                          "--date", "2026-01-26", "--offline"])
+                          "ext=Arch hold 25s", "ext_step=L1", "--date", "2026-01-26", "--offline"])
             finally:
                 fit.DATA_PATH = old
             with open(path) as f:
@@ -135,6 +135,8 @@ class FitTests(unittest.TestCase):
             self.assertTrue(s["pull_prog"].startswith("L3"))  # unchanged step kept
             self.assertEqual(saved["activeProgressions"]["squat"], s["squat_prog"])
             self.assertEqual(saved["activeProgressions"]["push"], s["push_prog"])
+            self.assertTrue(saved["activeProgressions"]["core_ext"].startswith("L1: Prone Arch Hold"))
+            self.assertGreater(saved["settingsUpdatedAt"], self.data.get("settingsUpdatedAt") or "")
 
     def test_now_iso_matches_js_format(self):
         import re
