@@ -114,6 +114,28 @@ class FitTests(unittest.TestCase):
                 if "expectDeleted" in c:
                     self.assertEqual(sorted(out.get("deleted", {})), c["expectDeleted"])
 
+    def test_log_rr_step_changes_and_leg_suffix(self):
+        with tempfile.TemporaryDirectory() as d:
+            path = os.path.join(d, "data.json")
+            with open(path, "w") as f:
+                json.dump(self.data, f)
+            old = fit.DATA_PATH
+            fit.DATA_PATH = path
+            try:
+                fit.main(["log-rr", "pull=5,5,4", "squat=5,5,5", "squat_step=L4", "push=8,8,7", "push_step=full standard",
+                          "--date", "2026-01-26", "--offline"])
+            finally:
+                fit.DATA_PATH = old
+            with open(path) as f:
+                saved = json.load(f)
+            s = next(x for x in saved["rrSessions"] if x["date"] == "2026-01-26")
+            self.assertTrue(s["squat_prog"].startswith("L4: Bulgarian"))
+            self.assertEqual(s["squat_sets"], "5,5,5 (/leg)")
+            self.assertTrue(s["push_prog"].startswith("L2: Full Standard"))
+            self.assertTrue(s["pull_prog"].startswith("L3"))  # unchanged step kept
+            self.assertEqual(saved["activeProgressions"]["squat"], s["squat_prog"])
+            self.assertEqual(saved["activeProgressions"]["push"], s["push_prog"])
+
     def test_now_iso_matches_js_format(self):
         import re
         self.assertRegex(fit.now_iso(), r"^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d\.\d{3}Z$")

@@ -348,6 +348,16 @@ def cmd_log_run(args):
     auto_sync(args, "after")
 
 
+def resolve_step(ex, query):
+    """'L3', '3' or a name fragment ('negatives') -> the full ladder step for that exercise."""
+    q = query.strip().lower()
+    m = re.fullmatch(r"l?(\d+)", q)
+    for step in ex["ladders"]:
+        if (m and step.lower().startswith(f"l{m.group(1)}:")) or (not m and q in step.lower()):
+            return step
+    sys.exit(f"no step matching {query!r} for {ex['id']}; options:\n  " + "\n  ".join(ex["ladders"]))
+
+
 def cmd_log_rr(args):
     auto_sync(args, "before")
     data = load_data()
@@ -355,12 +365,23 @@ def cmd_log_rr(args):
     weights = sorted(data.get("weightLog", []), key=lambda w: w["date"])
     entry = {"id": f"rr-{args.date}", "date": args.date, "bw": args.bw or (weights[-1]["kg"] if weights else None)}
     sets = dict(kv.split("=", 1) for kv in args.sets)
-    unknown = set(sets) - {k for _, k in RR_SLOTS} - {"antiext", "antirot", "ext"}
+    slots = {k for _, k in RR_SLOTS}
+    unknown = set(sets) - slots - {f"{k}_step" for k in slots} - {"antiext", "antirot", "ext"}
     if unknown:
         sys.exit(f"unknown keys: {', '.join(sorted(unknown))}")
+    exercises = {e["id"]: e for e in load_program()["exercises"]}
     for _, k in RR_SLOTS:
-        entry[f"{k}_prog"] = active.get(k, "")
-        entry[f"{k}_sets"] = sets.get(k, "")
+        step = active.get(k, "")
+        if f"{k}_step" in sets:
+            step = resolve_step(exercises[k], sets[f"{k}_step"])
+        reps = sets.get(k, "")
+        if reps and "/leg" in exercises[k].get("targetRange", "") and "/leg" not in reps:
+            reps += " (/leg)"
+        entry[f"{k}_prog"] = step
+        entry[f"{k}_sets"] = reps
+        # Logged steps become the current ones, as in the web app.
+        if step:
+            data.setdefault("activeProgressions", {})[k] = step
     for k in ("antiext", "antirot", "ext"):
         entry[k] = sets.get(k, "")
     entry["notes"] = args.notes or ""
@@ -901,7 +922,7 @@ def main(argv=None):
     r.add_argument("--notes")
     r.set_defaults(func=cmd_log_run)
 
-    rr = sub.add_parser("log-rr", help="log an RR session: pull=4,4,4 squat=... antiext='Plank 2x30s'")
+    rr = sub.add_parser("log-rr", help="log an RR session: pull=4,4,4 squat=... push_step=L2 antiext='Plank 2x30s'")
     rr.add_argument("sets", nargs="+", metavar="KEY=SETS")
     rr.add_argument("--date", default=date.today().isoformat())
     rr.add_argument("--bw", type=float)
