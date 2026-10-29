@@ -778,6 +778,18 @@ def apply_health_day(data, day, now=None):
     return changes
 
 
+def find_export_xml(names):
+    """The main export file inside the zip: export.xml in any case or folder (iOS versions and
+    languages differ), else the first other .xml that isn't the clinical-records export_cda.xml."""
+    xml = [n for n in names if n.lower().endswith(".xml") and "cda" not in n.lower().rsplit("/", 1)[-1]]
+    for n in xml:
+        if n.lower().rsplit("/", 1)[-1] == "export.xml":
+            return n
+    if xml:
+        return xml[0]
+    sys.exit("no export.xml in the zip; it contains:\n  " + "\n  ".join(names[:30]))
+
+
 def health_days_from_export(path, since):
     """Normalized health days from a full Export.xml or the export .zip."""
     import zipfile
@@ -786,7 +798,7 @@ def health_days_from_export(path, since):
     read_from = (date.fromisoformat(since) - timedelta(days=1)).isoformat()
     if path.lower().endswith(".zip"):
         with zipfile.ZipFile(path) as zf:
-            name = next(n for n in zf.namelist() if n.endswith("/Export.xml") or n == "Export.xml")
+            name = find_export_xml(zf.namelist())
             with zf.open(name) as fh:
                 h = parse_health(fh, read_from)
     else:

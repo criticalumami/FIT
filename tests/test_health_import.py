@@ -17,6 +17,15 @@ def blank():
 
 
 class NormalizeTests(unittest.TestCase):
+    def test_find_export_xml_any_case_or_folder(self):
+        self.assertEqual(fit.find_export_xml(["apple_health_export/export_cda.xml", "apple_health_export/export.xml"]),
+                         "apple_health_export/export.xml")
+        self.assertEqual(fit.find_export_xml(["Export.xml"]), "Export.xml")
+        self.assertEqual(fit.find_export_xml(["apple_health_export/Exportieren.xml", "x/export_cda.xml"]),
+                         "apple_health_export/Exportieren.xml")
+        with self.assertRaises(SystemExit):
+            fit.find_export_xml(["workout-routes/route_1.gpx"])
+
     def test_shortcut_text_values_with_units(self):
         day = fit.normalize_health_day({
             "date": "2026-10-23", "weightKg": "78,9 kg", "restingHr": "61 count/min", "steps": "12 345",
