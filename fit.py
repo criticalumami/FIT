@@ -778,6 +778,13 @@ def apply_health_day(data, day, now=None):
     return changes
 
 
+def _xml_float(v):
+    try:
+        return float(v)
+    except (TypeError, ValueError):
+        return None
+
+
 def find_export_xml(names):
     """The main export file inside the zip: export.xml in any case or folder (iOS versions and
     languages differ), else the first other .xml that isn't the clinical-records export_cda.xml."""
@@ -825,9 +832,11 @@ def health_days_from_export(path, since):
             continue
         d = w.get("startDate", "")[:10]
         st = {k.replace(HK, ""): v for k, v in w["stats"].items()}
-        g = lambda t, k: (st.get(t) or {}).get(k)  # noqa: E731
+        # Export.xml numbers are machine-formatted ("146.876"): parse them here, not with the
+        # locale-guessing _num, which would read that as 146876 for whole-number fields.
+        g = lambda t, k: _xml_float((st.get(t) or {}).get(k))  # noqa: E731
         days.setdefault(d, {"date": d, "runs": []})["runs"].append({
-            "km": g("DistanceWalkingRunning", "sum"), "min": w.get("duration"),
+            "km": g("DistanceWalkingRunning", "sum"), "min": _xml_float(w.get("duration")),
             "hr": g("HeartRate", "average"), "maxHr": g("HeartRate", "maximum"),
             "power": g("RunningPower", "average"), "kcal": g("ActiveEnergyBurned", "sum"),
         })

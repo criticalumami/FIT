@@ -17,6 +17,22 @@ def blank():
 
 
 class NormalizeTests(unittest.TestCase):
+    def test_export_workout_decimals_are_not_thousands(self):
+        xml = """<?xml version="1.0"?><HealthData>
+<Workout workoutActivityType="HKWorkoutActivityTypeRunning" duration="73.6" durationUnit="min"
+ startDate="2026-10-31 07:00:00 +0200" endDate="2026-10-31 08:13:36 +0200">
+ <WorkoutStatistics type="HKQuantityTypeIdentifierDistanceWalkingRunning" sum="10.02" unit="km"/>
+ <WorkoutStatistics type="HKQuantityTypeIdentifierHeartRate" average="147.807" maximum="182" unit="count/min"/>
+ <WorkoutStatistics type="HKQuantityTypeIdentifierRunningPower" average="190.008" unit="W"/>
+</Workout></HealthData>"""
+        with tempfile.TemporaryDirectory() as d:
+            path = os.path.join(d, "Export.xml")
+            with open(path, "w") as f:
+                f.write(xml)
+            days = fit.health_days_from_export(path, "2026-10-31")
+        run = days[0]["runs"][0]
+        self.assertEqual((run["km"], run["min"], run["hr"], run["maxHr"], run["power"]), (10.02, 73.6, 148, 182, 190))
+
     def test_find_export_xml_any_case_or_folder(self):
         self.assertEqual(fit.find_export_xml(["apple_health_export/export_cda.xml", "apple_health_export/export.xml"]),
                          "apple_health_export/export.xml")
