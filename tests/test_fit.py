@@ -138,6 +138,14 @@ class FitTests(unittest.TestCase):
             self.assertTrue(saved["activeProgressions"]["core_ext"].startswith("L1: Prone Arch Hold"))
             self.assertGreater(saved["settingsUpdatedAt"], self.data.get("settingsUpdatedAt") or "")
 
+    def test_workout_log_vitals_use_newest_health_values(self):
+        data = {"meta": {"rhr": 57}, "weightLog": [], "rrSessions": [],
+                "runLog": [{"date": "2026-10-01", "type": "Easy", "km": 5, "min": 30, "vo2": 39.6}],
+                "dailyLog": [{"date": "2026-10-30", "restingHr": 60, "vo2": 41.4}, {"date": "2026-10-31", "restingHr": 64}]}
+        md = fit.workout_log_md(data)
+        self.assertIn("VO2 Max 41.4", md)
+        self.assertIn("Resting HR 62 bpm", md)
+
     def test_now_iso_matches_js_format(self):
         import re
         self.assertRegex(fit.now_iso(), r"^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d\.\d{3}Z$")

@@ -189,6 +189,18 @@
     return sorted[sorted.length - 1];
   }
 
+  // Newest VO2max from runs or Health days, and resting HR as the 7-day Health average
+  // (a single morning swings too much); meta.rhr is the fallback without Health data.
+  function currentVitals() {
+    const vo2Entry = L.latestBy([...state.runLog, ...(state.dailyLog || [])], 'vo2');
+    const rhrDays = [...(state.dailyLog || [])].filter(d => d.restingHr != null)
+      .sort((a, b) => a.date.localeCompare(b.date)).slice(-7);
+    const rhr = rhrDays.length
+      ? Math.round(rhrDays.reduce((a, d) => a + Number(d.restingHr), 0) / rhrDays.length)
+      : state.meta.rhr;
+    return { vo2: vo2Entry ? Number(vo2Entry.vo2) : null, rhr: rhr || null };
+  }
+
   // Latest Apple Health day vs the 14 days before it.
   function healthBoxHtml() {
     const days = [...(state.dailyLog || [])].sort((a, b) => a.date.localeCompare(b.date));
@@ -251,11 +263,11 @@
     const lastRR = getLatestRR();
     const sortedRuns = [...state.runLog].sort((a, b) => a.date.localeCompare(b.date));
     const lastRun = sortedRuns.length ? sortedRuns[sortedRuns.length - 1] : null;
-    const lastVo2Run = L.latestBy(state.runLog, 'vo2');
+    const vitals = currentVitals();
     const totalRunsKm = state.runLog.reduce((acc, r) => acc + Number(r.km || 0), 0);
     const weeks = L.weeklyKm(state.runLog);
     const thisWeek = weeks.length ? weeks[weeks.length - 1] : null;
-    const rhrStr = m.rhr ? ` | RHR ${esc(m.rhr)} bpm` : '';
+    const rhrStr = vitals.rhr ? ` | RHR ${esc(vitals.rhr)} bpm` : '';
 
     const kpiHtml = `
       <div class="stat-box">
@@ -271,7 +283,7 @@
       <div class="stat-box">
         <div class="stat-label">Latest Run (${lastRun ? esc(lastRun.date.slice(5)) : '-'})</div>
         <div class="stat-val">${lastRun ? Number(lastRun.km).toFixed(2) + ' km' : '-'}</div>
-        <div class="stat-sub">${lastRun ? `${esc(lastRun.hr || '-')} bpm avg (${esc(lastRun.maxHr || '-')} max)${lastVo2Run ? ` | VO2 ${esc(lastVo2Run.vo2)}` : ''}` : 'No runs'}</div>
+        <div class="stat-sub">${lastRun ? `${esc(lastRun.hr || '-')} bpm avg (${esc(lastRun.maxHr || '-')} max)${vitals.vo2 ? ` | VO2 ${esc(vitals.vo2.toFixed(1))}` : ''}` : 'No runs'}</div>
       </div>
       <div class="stat-box">
         <div class="stat-label">Running Volume (This Week)</div>
@@ -306,7 +318,7 @@
       `START  : ${fmtKg(startW)}${startDate ? ` (${startDate})` : ''}`,
       `CURRENT: ${fmtKg(curWeight)} ([${barStr}] ${pct.toFixed(1)}%)`,
       `TARGET : ${fmtKg(targetW)}${eta}`,
-      `CARDIO : ${lastVo2Run ? `VO2 Max ${lastVo2Run.vo2}` : 'VO2 Max -'}${m.rhr ? ` | RHR ${m.rhr} bpm` : ''}${lastZ2 ? ` | Latest Z2: ${Number(lastZ2.km).toFixed(2)} km @ ${lastZ2.hr} bpm` : ''}`
+      `CARDIO : VO2 Max ${vitals.vo2 ? vitals.vo2.toFixed(1) : '-'}${vitals.rhr ? ` | RHR ${vitals.rhr} bpm (7d avg)` : ''}${lastZ2 ? ` | Latest Z2: ${Number(lastZ2.km).toFixed(2)} km @ ${lastZ2.hr} bpm` : ''}`
     ].join('\n');
     document.getElementById('ascii-progress').textContent = ascii;
     document.getElementById('weight-rate-summary').textContent = trendLine(trend);
@@ -744,7 +756,7 @@
       '# FIT // WORKOUT & RECOMPOSITION LOG',
       '',
       `- **Current Weight:** ${fmtKg(getLatestWeight())} (Start: ${fmtKg(state.meta.startWeight)} -> Goal: ${fmtKg(state.meta.targetWeight)})`,
-      `- **Cardio Vitals:** VO2 Max ${(L.latestBy(state.runLog, 'vo2') || {}).vo2 || '-'} mL/(kg·min) | Resting HR ${state.meta.rhr || '-'} bpm`,
+      `- **Cardio Vitals:** VO2 Max ${currentVitals().vo2 || '-'} mL/(kg·min) | Resting HR ${currentVitals().rhr || '-'} bpm`,
       '',
       '## Recommended Routine Sessions',
       '',
