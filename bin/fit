@@ -1,0 +1,121 @@
+#!/bin/bash
+# fit — plank / hold timer for the macOS terminal.
+#
+#   fit                 30s hold, beep at the end
+#   fit 60              60s hold
+#   fit 30 -r 3         3 rounds of 30s, 30s rest between (change with -p)
+#   fit 45 -r 3 -p 20   3 rounds of 45s, 20s rest
+#   fit core            core circuit x3: plank 60s, side plank L 30s, side plank R 30s,
+#                       prone arch 30s (10s switch between holds, 60s rest between rounds)
+#   fit -g 0 30         no 3s get-ready countdown
+#
+# Ctrl-C stops. Works with macOS's built-in bash 3.2; sounds via afplay, falls back to the bell.
+
+set -u
+
+SOUND_DIR=/System/Library/Sounds
+GET_READY=3
+
+usage() { sed -n '2,12p' "$0" | sed 's/^# \{0,1\}//'; exit "${1:-0}"; }
+
+play() {  # play <Sound name>, in the background so the clock keeps going
+  if command -v afplay >/dev/null 2>&1 && [ -f "$SOUND_DIR/$1.aiff" ]; then
+    afplay "$SOUND_DIR/$1.aiff" >/dev/null 2>&1 &
+  elif command -v osascript >/dev/null 2>&1; then
+    osascript -e 'beep' >/dev/null 2>&1 &
+  else
+    printf '\a'
+  fi
+}
+
+done_beep() { play Glass; sleep 0.35; play Glass; sleep 0.35; play Glass; }
+
+cleanup() { printf '\033[?25h\n'; exit 130; }
+
+# countdown <seconds> <label> <colour> [tick]
+countdown() {
+  local secs=$1 label=$2 colour=$3 tick=${4:-tick} left
+  left=$secs
+  while [ "$left" -gt 0 ]; do
+    printf '\r\033[K\033[1;%sm%s\033[0m  %d:%02d ' "$colour" "$label" $((left / 60)) $((left % 60))
+    bar "$secs" "$left"
+    if [ "$left" -le 3 ] && [ "$tick" = tick ]; then play Tink; fi
+    sleep 1
+    left=$((left - 1))
+  done
+  printf '\r\033[K'
+}
+
+bar() {  # progress bar, 20 wide
+  local total=$1 left=$2 width=20 filled i out=""
+  filled=$(( (total - left) * width / total ))
+  i=0
+  while [ $i -lt $width ]; do
+    if [ $i -lt $filled ]; then out="$out#"; else out="$out-"; fi
+    i=$((i + 1))
+  done
+  printf '[%s]' "$out"
+}
+
+hold() {  # hold <seconds> <name>
+  countdown "$1" "$2" 32
+  done_beep
+  printf '\033[1;32m%s\033[0m  done (%ss)\n' "$2" "$1"
+}
+
+rest() {  # rest <seconds> <next thing>
+  [ "$1" -gt 0 ] || return 0
+  countdown "$1" "Rest, next: $2" 36
+  play Ping
+}
+
+secs=30 rounds=1 pause=30 preset=""
+while [ $# -gt 0 ]; do
+  case $1 in
+    -h|--help) usage 0 ;;
+    -r|--rounds) rounds=${2:?}; shift ;;
+    -p|--rest) pause=${2:?}; shift ;;
+    -g|--get-ready) GET_READY=${2:?}; shift ;;
+    core) preset=core ;;
+    *[!0-9]*|'') echo "fit: unknown option '$1'" >&2; usage 1 ;;
+    *) secs=$1 ;;
+  esac
+  shift
+done
+for n in "$secs" "$rounds" "$pause" "$GET_READY"; do
+  case $n in *[!0-9]*|'') echo "fit: numbers only, got '$n'" >&2; exit 1 ;; esac
+done
+[ "$secs" -gt 0 ] || { echo "fit: duration must be more than 0" >&2; exit 1; }
+
+if [ "$preset" = core ]; then
+  [ "$rounds" -eq 1 ] && rounds=3
+  names=("Plank" "Side plank (left)" "Side plank (right)" "Prone arch")
+  times=(60 30 30 30)
+  switch=10 round_rest=60
+  first="${names[0]}"
+else
+  names=("Plank") times=("$secs") switch=0 round_rest=$pause
+  first="Plank"
+fi
+
+trap cleanup INT TERM
+printf '\033[?25l'  # hide cursor
+
+[ "$GET_READY" -gt 0 ] && countdown "$GET_READY" "Get ready: $first" 33
+
+r=1
+while [ $r -le "$rounds" ]; do
+  [ "$rounds" -gt 1 ] && printf '\033[1mRound %d/%d\033[0m\n' "$r" "$rounds"
+  i=0
+  while [ $i -lt ${#names[@]} ]; do
+    hold "${times[$i]}" "${names[$i]}"
+    j=$((i + 1))
+    if [ $j -lt ${#names[@]} ]; then rest "$switch" "${names[$j]}"; fi
+    i=$j
+  done
+  [ $r -lt "$rounds" ] && rest "$round_rest" "round $((r + 1)) ${names[0]}"
+  r=$((r + 1))
+done
+
+printf '\033[?25h\033[1mAll done.\033[0m\n'
+wait

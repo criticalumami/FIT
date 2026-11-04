@@ -60,6 +60,14 @@ python3 fit.py log-run 2026-10-22 "Tempo / Threshold Run" 8.5 58.0 --hr 160
 python3 fit.py log-rr pull=5,4,4 squat="5,5,5 (/leg)" dip=6,5,5 hinge=9,9,9 row=8,7,7 push=5,4,4 --notes "felt good"
 ```
 
+**Plank timer (`fit` in the terminal, macOS):** `bin/fit` counts down a hold and beeps (system sounds via `afplay`). `fit` = 30s, `fit 60` = 60s, `fit 30 -r 3` = 3 rounds with 30s rest (`-p 20` to change the rest), `fit core` = plank 60s, side plank 30s each side, prone arch 30s, x3. `fit -h` for all options. Install once:
+
+```bash
+mkdir -p ~/bin && ln -sf "$PWD/bin/fit" ~/bin/fit      # run from your FIT checkout
+grep -q 'HOME/bin' ~/.zshrc || echo 'export PATH="$HOME/bin:$PATH"' >> ~/.zshrc
+source ~/.zshrc
+```
+
 **Apple Health from the iPhone:** install the ready-made [FIT Upload](shortcuts/FIT%20Upload.shortcut) shortcut, then Health → profile → *Export All Health Data* → share to **FIT Upload**; an Action in the data repo imports it. Guide (also a fully automatic daily option you build yourself): [docs/health-shortcut.md](docs/health-shortcut.md). Rebuild the shortcut with `tools/make_shortcut.py`.
 
 **Apple Health, from a full export** (adds runs with HR/power, weigh-ins and daily metrics; safe to re-run):
