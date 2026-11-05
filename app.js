@@ -814,6 +814,7 @@
     renderFormGuides();
     renderMetrics();
     renderSync();
+    if (window.FITCharts) window.FITCharts.render(state);
   }
 
   // ==========================================
@@ -1700,11 +1701,11 @@
     saveState(editId ? 'RR SESSION UPDATED' : 'RR SESSION SAVED');
   }
 
-  // Keyboard shortcuts (1-6 tabs, t theme, space timer) when not in input/textarea
+  // Keyboard shortcuts (1-7 tabs, t theme, space timer) when not in input/textarea
   document.addEventListener('keydown', e => {
     const tag = (e.target.tagName || '').toLowerCase();
     if (tag === 'input' || tag === 'textarea' || tag === 'select' || e.metaKey || e.ctrlKey || e.altKey) return;
-    const tabMap = { '1': 'status', '2': 'log', '3': 'program', '4': 'form', '5': 'metrics', '6': 'sync' };
+    const tabMap = { '1': 'status', '2': 'log', '3': 'program', '4': 'form', '5': 'metrics', '6': 'sync', '7': 'charts' };
     if (tabMap[e.key]) {
       e.preventDefault();
       switchTab(tabMap[e.key]);

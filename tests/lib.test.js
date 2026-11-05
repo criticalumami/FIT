@@ -140,3 +140,47 @@ test('mergeStates is idempotent and does not mutate inputs', () => {
 test('stableStringify ignores key order', () => {
   assert.equal(L.stableStringify({ b: 1, a: [{ y: 2, x: 1 }] }), L.stableStringify({ a: [{ x: 1, y: 2 }], b: 1 }));
 });
+
+test('holdSeconds parses sets x seconds and single holds', () => {
+  assert.equal(L.holdSeconds('Plank 2x30s'), 60);
+  assert.equal(L.holdSeconds('Side Plank 3x25s/side'), 75);
+  assert.equal(L.holdSeconds('Prone Arch Hold 25s'), 25);
+  assert.equal(L.holdSeconds('Arch/RevHyper 2x8'), null);
+  assert.equal(L.holdSeconds('Plank 2 sets (sloppy, untimed)'), null);
+  assert.equal(L.holdSeconds(''), null);
+});
+
+test('rrSlotSeries totals reps and marks level changes', () => {
+  const s = L.rrSlotSeries([
+    { date: '2026-10-28', squat_sets: '6,6,6 (/leg)', squat_prog: 'L4: BSS' },
+    { date: '2026-10-19', squat_sets: '8,8,8 (/leg)', squat_prog: 'L3: Step-Up' },
+    { date: '2026-10-30', squat_sets: 'skipped', squat_prog: 'L4: BSS' },
+    { date: '2026-11-02', squat_sets: '7,7,7', squat_prog: 'L4: BSS' }
+  ], 'squat');
+  assert.deepEqual(s.map(p => [p.date, p.total, p.level, p.levelChange]), [
+    ['2026-10-19', 24, 3, false],
+    ['2026-10-28', 18, 4, true],
+    ['2026-11-02', 21, 4, false]
+  ]);
+});
+
+test('runSeries computes pace and drops incomplete runs', () => {
+  const r = L.runSeries([{ date: '2026-11-03', km: 8, min: 64 }, { date: '2026-11-01', km: 0, min: 10 }]);
+  assert.equal(r.length, 1);
+  assert.equal(r[0].paceMin, 8);
+});
+
+test('rollingMean averages the trailing window', () => {
+  const m = L.rollingMean([
+    { date: '2026-11-01', restingHr: 60 },
+    { date: '2026-11-03', restingHr: 62 },
+    { date: '2026-11-10', restingHr: 58 }
+  ], 'restingHr', 7);
+  assert.deepEqual(m.map(p => [p.mean, p.n]), [[60, 1], [61, 2], [58, 1]]);
+});
+
+test('goalEta projects the trend to the target', () => {
+  assert.equal(L.goalEta({ avg7: 77, ratePerWeek: -0.5, latestDate: '2026-11-02' }, 73.5), '2026-12-21');
+  assert.equal(L.goalEta({ avg7: 77, ratePerWeek: 0.2, latestDate: '2026-11-02' }, 73.5), null);
+  assert.equal(L.goalEta(null, 73.5), null);
+});
