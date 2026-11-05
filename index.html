@@ -12,6 +12,7 @@
   </script>
   <title>FIT // suckless training &amp; recomposition</title>
   <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="charts.css">
 </head>
 <body>
 
@@ -24,6 +25,7 @@
       <button type="button" class="dwm-tag" role="tab" aria-selected="false" data-tab="form" title="Shortcut: 4">4:form+ladders</button>
       <button type="button" class="dwm-tag" role="tab" aria-selected="false" data-tab="metrics" title="Shortcut: 5">5:runs+weight</button>
       <button type="button" class="dwm-tag" role="tab" aria-selected="false" data-tab="sync" title="Shortcut: 6">6:sync+export</button>
+      <button type="button" class="dwm-tag" role="tab" aria-selected="false" data-tab="charts" title="Shortcut: 7">7:charts</button>
     </nav>
     <div class="dwm-layout" title="Tiled Monochrome Layout">[]=</div>
     <div class="dwm-status">
@@ -598,6 +600,42 @@ Pair 3: Row Progression (3x8-12)     + Push-Up Progression (3x5-8)
     </section>
 
     <!-- ==========================================
+         VIEW 7: CHARTS
+         ========================================== -->
+    <section id="view-charts" class="view-panel" role="tabpanel">
+      <div class="tile-grid">
+        <div class="tile tile-focus col-6">
+          <div class="tile-header"><span>Bodyweight vs Goal</span><span class="meta" id="ch-weight-meta"></span></div>
+          <div class="tile-body"><div id="ch-weight" class="chart-box"></div></div>
+        </div>
+        <div class="tile col-6">
+          <div class="tile-header"><span>Weekly Running Volume (km)</span><span class="meta" id="ch-weekly-meta"></span></div>
+          <div class="tile-body"><div id="ch-weekly" class="chart-box"></div></div>
+        </div>
+        <div class="tile col-6">
+          <div class="tile-header"><span>Pace per Run</span><span class="meta" id="ch-pace-meta"></span></div>
+          <div class="tile-body"><div id="ch-pace" class="chart-box"></div></div>
+        </div>
+        <div class="tile col-6">
+          <div class="tile-header"><span>Avg Heart Rate per Run (bpm)</span><span class="meta" id="ch-hr-meta"></span></div>
+          <div class="tile-body"><div id="ch-hr" class="chart-box"></div></div>
+        </div>
+        <div class="tile col-6">
+          <div class="tile-header"><span>VO2max (mL/kg/min)</span><span class="meta" id="ch-vo2-meta"></span></div>
+          <div class="tile-body"><div id="ch-vo2" class="chart-box"></div></div>
+        </div>
+        <div class="tile col-6">
+          <div class="tile-header"><span>Resting Heart Rate (bpm)</span><span class="meta" id="ch-rhr-meta"></span></div>
+          <div class="tile-body"><div id="ch-rhr" class="chart-box"></div></div>
+        </div>
+        <div class="tile col-12">
+          <div class="tile-header"><span>Recommended Routine Rep Progressions</span><span class="meta">tap or hover a point for the sets</span></div>
+          <div class="tile-body"><div id="ch-rr" class="chart-box"></div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==========================================
          VIEW 6: SYNC, EXPORT & GITHUB API
          ========================================== -->
     <section id="view-sync" class="view-panel" role="tabpanel">
@@ -686,11 +724,12 @@ Pair 3: Row Progression (3x8-12)     + Push-Up Progression (3x5-8)
 
   <footer>
     <div>FIT // suckless grayscale tracker // 100% bodyweight RR + running</div>
-    <div>Keys: [1-6] switch view | [t] invert grayscale | [space] start/pause timer</div>
+    <div>Keys: [1-7] switch view | [t] invert grayscale | [space] start/pause timer</div>
   </footer>
 
   <script src="lib.js"></script>
   <script src="program.js"></script>
+  <script src="charts.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

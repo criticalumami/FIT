@@ -238,6 +238,93 @@
     return out;
   }
 
+
+  /*
+   * Chart series helpers (used by charts.js).
+   */
+
+  // Hold time in seconds from free text: "Plank 2x30s" -> 60, "Side Plank 3x25s/side" -> 75,
+  // "Prone Arch Hold 25s" -> 25. Rep-based or untimed entries return null.
+  function holdSeconds(str) {
+    const s = String(str || '');
+    const m = s.match(/(\d+)\s*x\s*(\d+)\s*s\b/i);
+    if (m) return +m[1] * +m[2];
+    const one = s.match(/(\d+)\s*s\b/i);
+    return one ? +one[1] : null;
+  }
+
+  // "L4: Chin-Ups / Pull-Ups" -> 4
+  function progLevel(prog) {
+    const m = String(prog || '').match(/^L(\d+)/i);
+    return m ? +m[1] : null;
+  }
+
+  // One point per RR session for a strength slot (pull, squat, dip, hinge, row, push):
+  // { date, total, sets, prog, level, levelChange }. Unparseable sessions are skipped.
+  function rrSlotSeries(rrSessions, slot) {
+    const out = [];
+    (rrSessions || [])
+      .filter(s => s && s.date)
+      .slice()
+      .sort((a, b) => a.date.localeCompare(b.date))
+      .forEach(s => {
+        const p = parseSets(s[slot + '_sets']);
+        if (!p) return;
+        const prog = s[slot + '_prog'] || '';
+        const prev = out[out.length - 1];
+        out.push({
+          date: s.date,
+          total: p.reps[0] + p.reps[1] + p.reps[2],
+          sets: s[slot + '_sets'],
+          prog,
+          level: progLevel(prog),
+          levelChange: !!(prev && prog && prev.prog && prev.prog !== prog)
+        });
+      });
+    return out;
+  }
+
+  // Core holds per session: { date, seconds, text } for field antiext | antirot | ext.
+  function rrHoldSeries(rrSessions, field) {
+    return (rrSessions || [])
+      .filter(s => s && s.date)
+      .slice()
+      .sort((a, b) => a.date.localeCompare(b.date))
+      .map(s => ({ date: s.date, seconds: holdSeconds(s[field]), text: s[field] || '' }))
+      .filter(p => p.seconds != null);
+  }
+
+  // Runs with pace in decimal min/km, sorted by date.
+  function runSeries(runLog) {
+    return (runLog || [])
+      .filter(r => r && r.date && Number(r.km) > 0 && Number(r.min) > 0)
+      .map(r => Object.assign({}, r, { km: Number(r.km), min: Number(r.min), paceMin: Number(r.min) / Number(r.km) }))
+      .sort((a, b) => a.date.localeCompare(b.date));
+  }
+
+  // Trailing mean over `days` calendar days for each dated point with a numeric `field`.
+  function rollingMean(list, field, days = 7) {
+    const pts = (list || [])
+      .filter(x => x && x.date && x[field] != null && x[field] !== '' && !isNaN(Number(x[field])))
+      .map(x => ({ date: x.date, d: isoToDay(x.date), v: Number(x[field]) }))
+      .sort((a, b) => a.d - b.d);
+    return pts.map(p => {
+      const win = pts.filter(q => q.d <= p.d && q.d > p.d - days);
+      return { date: p.date, value: p.v, mean: win.reduce((a, q) => a + q.v, 0) / win.length, n: win.length };
+    });
+  }
+
+  // Date the trend line reaches `target` (kg), or null if not heading there.
+  function goalEta(trend, target) {
+    if (!trend || trend.ratePerWeek == null || target == null) return null;
+    const gap = target - trend.avg7;
+    if (Math.abs(gap) < 0.05) return trend.latestDate;
+    if (Math.sign(gap) !== Math.sign(trend.ratePerWeek) || trend.ratePerWeek === 0) return null;
+    const days = Math.round((gap / trend.ratePerWeek) * 7);
+    if (days > 730) return null;
+    return dayToIso(isoToDay(trend.latestDate) + days);
+  }
+
   return {
     mergeStates,
     stableStringify,
@@ -254,6 +341,13 @@
     latestBy,
     pace,
     isoToDay,
-    dayToIso
+    dayToIso,
+    holdSeconds,
+    progLevel,
+    rrSlotSeries,
+    rrHoldSeries,
+    runSeries,
+    rollingMean,
+    goalEta
   };
 });
