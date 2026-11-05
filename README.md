@@ -23,7 +23,7 @@ A zero-dependency web app (Recommended Routine + running + weight trend) plus a 
 
 **Syncing between devices (automatic):** your data lives in the private repo `criticalumami/FIT-data` (sync refuses public repos). Changes from different devices are **merged**, not overwritten, and deletions carry over.
 
-- **Web app, once per device:** tab 6 → paste a fine-grained token (only `FIT-data`, *Contents: read & write*) → tick **Remember on this device**. After that it syncs when the app opens, when you return to it, and a few seconds after every change. The `sync:` indicator in the top bar shows the status; *Forget Token* removes it.
+- **Web app, once per device:** paste a fine-grained token (only `FIT-data`, *Contents: read & write*) into the **Connect** box that the status tab shows on any unconnected device, or open `https://criticalumami.github.io/FIT/#connect=<token>` once (the token stays in the browser and is wiped from the address bar). The first connect loads the repo copy and keeps only local entries the repo doesn't have, so a stale browser can't overwrite newer logs. (Tab 6 → *Remember on this device* still works too.) After that it syncs when the app opens, when you return to it, and a few seconds after every change. The `sync:` indicator in the top bar shows the status; *Forget Token* removes it.
 - **Mac:** `log-weight`, `log-run` and `log-rr` sync automatically before and after (add `--offline` to skip). To sync manually (uses your `gh` login):
 
 ```bash

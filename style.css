@@ -690,3 +690,34 @@ footer {
   letter-spacing: 0.02em;
 }
 
+
+/* Shown on the status tab while this device has no FIT-data token. */
+.connect-banner {
+  border: 2px solid var(--border-strong);
+  margin-bottom: 12px;
+}
+.connect-banner[hidden] {
+  display: none;
+}
+.connect-banner .tile-body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.connect-row {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.connect-row input {
+  flex: 1 1 220px;
+  min-width: 0;
+}
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
