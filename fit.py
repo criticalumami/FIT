@@ -225,12 +225,16 @@ def build_ics(events):
     return "\r\n".join(ics_fold(l) for l in out) + "\r\n"
 
 
-def push_apple_calendar(events, start):
-    """Replace all 'FIT:' events from `start` onward in the macOS Calendar 'FIT' calendar."""
+def apple_calendar_script(events, start):
+    """AppleScript that replaces 'FIT:' events from `start` onward in every calendar named 'FIT'."""
     def q(text):
         return text.replace("\\", "\\\\").replace('"', '\\"')
 
     # Dates are built from numeric parts: AppleScript date strings depend on the system locale.
+    # The old version deleted with one `whose` query inside a silent `try`: when that query
+    # failed, or when iCloud and "On My Mac" each had a calendar named FIT, every run added
+    # another full copy of the schedule. Now each FIT calendar is checked event by event, and
+    # errors surface instead of being swallowed.
     lines = [
         'on mkdate(y, m, d)',
         '  set t to current date',
@@ -242,23 +246,44 @@ def push_apple_calendar(events, start):
         '  return t',
         'end mkdate',
         'tell application "Calendar"',
-        '  if not (exists calendar "FIT") then make new calendar with properties {name:"FIT"}',
-        '  tell calendar "FIT"',
-        f'    set cutoff to my mkdate({start.year}, {start.month}, {start.day})',
-        '    try',
-        '      delete (every event whose summary begins with "FIT:" and start date ≥ cutoff)',
-        '    end try',
+        '  set fitCals to every calendar whose name is "FIT"',
+        '  if (count of fitCals) is 0 then',
+        '    make new calendar with properties {name:"FIT"}',
+        '    set fitCals to every calendar whose name is "FIT"',
+        '  end if',
+        f'  set cutoff to my mkdate({start.year}, {start.month}, {start.day})',
+        '  set removed to 0',
+        '  repeat with c in fitCals',
+        '    set evs to every event of c',
+        '    repeat with i from (count of evs) to 1 by -1',
+        '      set e to item i of evs',
+        '      if (summary of e starts with "FIT:") and (start date of e ≥ cutoff) then',
+        '        delete e',
+        '        set removed to removed + 1',
+        '      end if',
+        '    end repeat',
+        '  end repeat',
+        '  tell item 1 of fitCals',
     ]
     for d, title, desc in events:
         lines += [
             f'    set sDate to my mkdate({d.year}, {d.month}, {d.day})',
             f'    make new event at end with properties {{summary:"{q(title)}", start date:sDate, end date:sDate, allday event:true, description:"{q(desc)}"}}',
         ]
-    lines += ["  end tell", "end tell"]
-    res = subprocess.run(["osascript", "-e", "\n".join(lines)], capture_output=True, text=True)
+    lines += [
+        "  end tell",
+        '  return (removed as text) & " removed from " & ((count of fitCals) as text) & " FIT calendar(s)"',
+        "end tell",
+    ]
+    return "\n".join(lines)
+
+
+def push_apple_calendar(events, start):
+    """Replace all 'FIT:' events from `start` onward in the macOS Calendar 'FIT' calendar(s)."""
+    res = subprocess.run(["osascript", "-e", apple_calendar_script(events, start)], capture_output=True, text=True)
     if res.returncode != 0:
         sys.exit(f"osascript failed: {res.stderr.strip()}")
-    print("updated macOS Calendar 'FIT'")
+    print(f"updated macOS Calendar 'FIT': {res.stdout.strip()}, {len(events)} added")
 
 
 # ---------------------------------------------------------------- PROGRAM.md blocks

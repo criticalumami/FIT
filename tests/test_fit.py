@@ -13,6 +13,15 @@ EXAMPLE = os.path.join(os.path.dirname(fit.__file__), "data.example.json")
 
 
 class FitTests(unittest.TestCase):
+    def test_apple_calendar_script_clears_every_fit_calendar(self):
+        events = [(date(2026, 11, 2), 'FIT: RR "Full"', "line1\nline2")]
+        script = fit.apple_calendar_script(events, date(2026, 11, 2))
+        self.assertIn('every calendar whose name is "FIT"', script)
+        self.assertIn("repeat with c in fitCals", script)
+        self.assertNotIn("try", script)  # failures must surface, not add another copy
+        self.assertEqual(script.count("make new event"), 1)
+        self.assertIn('summary:"FIT: RR \\"Full\\""', script)
+
     def setUp(self):
         self.program = fit.load_program()
         with open(EXAMPLE) as f:

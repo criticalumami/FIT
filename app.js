@@ -1376,6 +1376,8 @@
       ok: `sync:ok ${time}`,
       error: 'sync:ERR'
     }[kind];
+    const banner = document.getElementById('connect-banner');
+    if (banner) banner.hidden = !(kind === 'off' && !getSyncConfig());
     if (bar) {
       bar.textContent = label;
       bar.title = detail || label;
@@ -1449,6 +1451,53 @@
       }
     }
   }
+
+  // First connection of a device: the repo is the truth. Keep only local log
+  // entries the repo has never seen, so a stale browser copy can't overwrite
+  // newer entries or settings with the same id.
+  function adoptRemote(remote) {
+    const known = {};
+    LOG_KEYS_APP.forEach(k => (remote[k] || []).forEach(e => { known[e.id] = true; }));
+    Object.keys(remote.deleted || {}).forEach(id => { known[id] = true; });
+    const localOnly = JSON.parse(JSON.stringify(state));
+    LOG_KEYS_APP.forEach(k => { localOnly[k] = (localOnly[k] || []).filter(e => !known[e.id]); });
+    localOnly.deleted = {};
+    localOnly.settingsUpdatedAt = '';
+    return withDefaults(L.mergeStates(localOnly, remote));
+  }
+  const LOG_KEYS_APP = ['rrSessions', 'weightLog', 'runLog', 'dailyLog'];
+
+  async function connectDevice(token) {
+    token = String(token || '').trim();
+    if (!token) return;
+    try {
+      localStorage.setItem(GH_REMEMBER_KEY, token);
+      sessionStorage.setItem(GH_TOKEN_KEY, token);
+    } catch (e) {}
+    document.getElementById('gh-remember').checked = true;
+    const cfg = getSyncConfig();
+    setSyncStatus('busy');
+    try {
+      await assertPrivateRepo(cfg.repo, cfg.token);
+      const remoteFile = await getFile(cfg, 'data.json');
+      if (remoteFile.text) {
+        state = adoptRemote(JSON.parse(remoteFile.text));
+        saveState(null, { replaced: true, noSync: true });
+      }
+      await syncNow();
+      showToast('CONNECTED: LATEST LOGS LOADED');
+    } catch (err) {
+      setSyncStatus('error', err.message);
+      showToast('CONNECT FAILED: see 6:sync');
+    }
+  }
+
+  document.getElementById('connect-banner').addEventListener('submit', e => {
+    e.preventDefault();
+    const input = document.getElementById('cb-token');
+    connectDevice(input.value);
+    input.value = '';
+  });
 
   document.getElementById('gh-sync-form').addEventListener('submit', e => {
     e.preventDefault();
@@ -1728,6 +1777,18 @@
   prefillNextTargetIntoForm();
   renderAll();
   seedFromLocalDataJson();
-  if (getSyncConfig()) syncNow();
+  // One-tap setup link: .../FIT/#connect=<token>. The fragment never leaves the
+  // browser; it is removed from the address bar and history right away.
+  function connectFromHash() {
+    const m = location.hash.match(/^#connect=([^&]+)/);
+    if (!m) return false;
+    history.replaceState(null, '', location.pathname + location.search);
+    connectDevice(decodeURIComponent(m[1]));
+    return true;
+  }
+  window.addEventListener('hashchange', connectFromHash);
+  if (connectFromHash()) {
+    // connecting
+  } else if (getSyncConfig()) syncNow();
   else setSyncStatus('off');
 })();

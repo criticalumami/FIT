@@ -53,6 +53,18 @@
          VIEW 1: STATUS & DASHBOARD
          ========================================== -->
     <section id="view-status" class="view-panel active" role="tabpanel">
+      <form class="tile connect-banner" id="connect-banner" hidden>
+        <div class="tile-body">
+          <strong>This device is not connected to FIT-data.</strong>
+          <span class="muted" id="connect-banner-detail">You are seeing this browser's own copy, which may be out of date.</span>
+          <div class="connect-row">
+            <label class="sr-only" for="cb-token">FIT-data token</label>
+            <input type="password" id="cb-token" autocomplete="off" placeholder="paste your github_pat_... token once">
+            <button type="submit">Connect</button>
+          </div>
+          <span class="hint">Remembered on this device; it then loads your latest logs every time it opens. Only sent to api.github.com.</span>
+        </div>
+      </form>
       <div class="stat-row" id="dashboard-kpis"></div>
 
       <div class="tile-grid">
