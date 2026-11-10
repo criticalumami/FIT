@@ -814,6 +814,7 @@
     renderFormGuides();
     renderMetrics();
     renderSync();
+    if (window.FITCharts) window.FITCharts.render(state);
   }
 
   // ==========================================

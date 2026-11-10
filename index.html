@@ -12,6 +12,7 @@
   </script>
   <title>FIT // suckless training &amp; recomposition</title>
   <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="charts.css">
 </head>
 <body>
 
@@ -104,6 +105,57 @@
               </table>
             </div>
           </div>
+        </div>
+
+        <!-- Trend charts (charts.js) -->
+        <div class="tile-grid col-12 dash-charts" id="dash-charts">
+        <div class="tile tile-focus col-12" id="dash-charts-bar">
+          <div class="tile-header">
+            <span>Trends</span>
+            <span class="chart-range" role="group" aria-label="Chart range">
+              <button type="button" class="btn-inline" data-range="14">2w</button>
+              <button type="button" class="btn-inline" data-range="28">4w</button>
+              <button type="button" class="btn-inline" data-range="84">12w</button>
+              <button type="button" class="btn-inline" data-range="0">all</button>
+            </span>
+          </div>
+        </div>
+        <div class="tile tile-focus col-6">
+          <div class="tile-header"><span>Bodyweight vs Goal</span><span class="meta" id="ch-weight-meta"></span></div>
+          <div class="tile-body"><div id="ch-weight" class="chart-box"></div></div>
+        </div>
+        <div class="tile col-6">
+          <div class="tile-header"><span>Weekly Running Volume (km)</span><span class="meta" id="ch-weekly-meta"></span></div>
+          <div class="tile-body"><div id="ch-weekly" class="chart-box"></div></div>
+        </div>
+        <div class="tile col-6">
+          <div class="tile-header"><span>Pace per Run</span><span class="meta" id="ch-pace-meta"></span></div>
+          <div class="tile-body"><div id="ch-pace" class="chart-box"></div></div>
+        </div>
+        <div class="tile col-6">
+          <div class="tile-header"><span>Avg Heart Rate per Run (bpm)</span><span class="meta" id="ch-hr-meta"></span></div>
+          <div class="tile-body"><div id="ch-hr" class="chart-box"></div></div>
+        </div>
+        <div class="tile col-6">
+          <div class="tile-header"><span>VO2max (mL/kg/min)</span><span class="meta" id="ch-vo2-meta"></span></div>
+          <div class="tile-body"><div id="ch-vo2" class="chart-box"></div></div>
+        </div>
+        <div class="tile col-6">
+          <div class="tile-header"><span>Resting Heart Rate (bpm)</span><span class="meta" id="ch-rhr-meta"></span></div>
+          <div class="tile-body"><div id="ch-rhr" class="chart-box"></div></div>
+        </div>
+        <div class="tile col-6">
+          <div class="tile-header"><span>Sleep (h)</span><span class="meta" id="ch-sleep-meta"></span></div>
+          <div class="tile-body"><div id="ch-sleep" class="chart-box"></div></div>
+        </div>
+        <div class="tile col-6">
+          <div class="tile-header"><span>Daily Steps</span><span class="meta" id="ch-steps-meta"></span></div>
+          <div class="tile-body"><div id="ch-steps" class="chart-box"></div></div>
+        </div>
+        <div class="tile col-12">
+          <div class="tile-header"><span>Recommended Routine Rep Progressions</span><span class="meta">tap or hover a point for the sets</span></div>
+          <div class="tile-body"><div id="ch-rr" class="chart-box"></div></div>
+        </div>
         </div>
 
         <!-- Active Progression Levels (Quick Switcher) -->
@@ -691,6 +743,7 @@ Pair 3: Row Progression (3x8-12)     + Push-Up Progression (3x5-8)
 
   <script src="lib.js"></script>
   <script src="program.js"></script>
+  <script src="charts.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
