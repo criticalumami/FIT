@@ -99,3 +99,16 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
+/* Landing-page placement and range toggle */
+.dash-charts {
+  margin-bottom: 0;
+}
+.chart-range {
+  display: flex;
+  gap: 4px;
+}
+.chart-range [aria-pressed="true"] {
+  background: var(--accent-bg);
+  color: var(--accent-fg);
+}

@@ -1,5 +1,5 @@
 /*
- * FIT // charts tab (7:charts). Plain inline SVG, zero dependencies, monochrome.
+ * FIT // trend charts on the status (landing) page. Plain inline SVG, zero dependencies, monochrome.
  * app.js calls FITCharts.render(state) whenever state changes; charts redraw at
  * their real pixel width (ResizeObserver), so text stays legible on phones.
  */
@@ -13,6 +13,16 @@
 
   let state = null;
   const hoverData = {}; // chart id -> { pts: [{x, y, tip}], top, bottom }
+
+  // Visible range in days (0 = all). Remembered per browser.
+  const RANGE_KEY = 'fit_chart_range_v1';
+  let rangeDays = 28;
+  try {
+    const saved = localStorage.getItem(RANGE_KEY);
+    if (saved != null && !isNaN(+saved)) rangeDays = +saved;
+  } catch (e) {}
+  const cutoffIso = () => rangeDays ? L.dayToIso(L.isoToDay(new Date().toISOString().slice(0, 10)) - rangeDays + 1) : '0000-00-00';
+  const inRange = date => !!date && date >= cutoffIso();
 
   // ---------- small utils ----------
   const fmtPace = m => {
@@ -137,7 +147,7 @@
 
   // ---------- individual charts ----------
   function weightChart(width) {
-    const w = (state.weightLog || []).filter(x => x && x.date && !isNaN(Number(x.kg)))
+    const w = (state.weightLog || []).filter(x => x && inRange(x.date) && !isNaN(Number(x.kg)))
       .map(x => ({ date: x.date, kg: Number(x.kg) })).sort((a, b) => a.date.localeCompare(b.date));
     if (!w.length) return { meta: '', html: '<p class="muted">No weigh-ins yet.</p>' };
     const target = state.meta.targetWeight != null ? Number(state.meta.targetWeight) : null;
@@ -186,7 +196,7 @@
   }
 
   function weeklyVolumeChart(width) {
-    const weeks = L.weeklyKm(state.runLog);
+    const weeks = L.weeklyKm(state.runLog).filter(wk => !rangeDays || L.isoToDay(wk.weekStart) + 6 >= L.isoToDay(cutoffIso()));
     if (!weeks.length) return { meta: '', html: '<p class="muted">No runs yet.</p>' };
     const W = Math.max(260, Math.round(width)), H = 190;
     const padL = 44, padR = 14, padT = 16, padB = 24;
@@ -244,8 +254,8 @@
   const runTip = r => `${r.date} | ${esc(r.type)}<br><b>${r.km.toFixed(2)} km</b> in ${r.min.toFixed(1)} min<br>${fmtPace(r.paceMin)}/km${r.hr ? ` | ${r.hr} bpm` : ''}`;
 
   function paceChart(width) {
-    const runs = L.runSeries(state.runLog);
-    if (!runs.length) return { meta: '', html: '<p class="muted">No runs yet.</p>' };
+    const runs = L.runSeries(state.runLog).filter(r => inRange(r.date));
+    if (!runs.length) return { meta: '', html: '<p class="muted">No runs in this range.</p>' };
     const paces = runs.map(r => r.paceMin);
     const html = timeChart({
       id: 'pace', width, height: 200, x0: runs[0].date, x1: runs[runs.length - 1].date,
@@ -259,7 +269,7 @@
   }
 
   function hrChart(width) {
-    const runs = L.runSeries(state.runLog).filter(r => r.hr);
+    const runs = L.runSeries(state.runLog).filter(r => r.hr && inRange(r.date));
     if (!runs.length) return { meta: '', html: '<p class="muted">No runs with heart rate yet.</p>' };
     const hrs = runs.map(r => Number(r.hr));
     const caps = L.RUN_HR_RULES.map(r => r.cap);
@@ -278,7 +288,7 @@
     const byDate = new Map();
     (state.runLog || []).forEach(r => { if (r && r.date && r.vo2) byDate.set(r.date, { v: Number(r.vo2), src: 'run' }); });
     (state.dailyLog || []).forEach(d => { if (d && d.date && d.vo2) byDate.set(d.date, { v: Number(d.vo2), src: 'Health' }); });
-    const pts = [...byDate.entries()].sort((a, b) => a[0].localeCompare(b[0]))
+    const pts = [...byDate.entries()].filter(([date]) => inRange(date)).sort((a, b) => a[0].localeCompare(b[0]))
       .map(([date, x]) => ({ date, y: x.v, tip: `${date}<br><b>${x.v.toFixed(1)}</b> mL/kg/min (${x.src})` }));
     if (!pts.length) return { meta: '', html: '<p class="muted">No VO2max readings yet.</p>' };
     const ys = pts.map(p => p.y);
@@ -291,7 +301,7 @@
   }
 
   function rhrChart(width) {
-    const m = L.rollingMean(state.dailyLog, 'restingHr', 7);
+    const m = L.rollingMean(state.dailyLog, 'restingHr', 7).filter(p => inRange(p.date));
     if (!m.length) return { meta: '', html: '<p class="muted">No resting HR from Apple Health yet.</p>' };
     const ys = m.map(p => p.value);
     const html = timeChart({
@@ -305,6 +315,38 @@
     return { meta: `7-day avg ${m[m.length - 1].mean.toFixed(1)} bpm`, html };
   }
 
+  // Daily metric from Apple Health: dots per day plus a 7-day average line.
+  function dailyChart(o, width) {
+    const m = L.rollingMean(state.dailyLog, o.field, 7).filter(p => inRange(p.date));
+    if (!m.length) return { meta: '', html: `<p class="muted">No ${o.name} data in this range.</p>` };
+    const byDate = new Map((state.dailyLog || []).map(d => [d.date, d]));
+    const ys = m.map(p => o.scale(p.value)).concat(o.ref != null ? [o.ref] : []);
+    const html = timeChart({
+      id: o.id, width, height: 170, x0: m[0].date, x1: m[m.length - 1].date,
+      yMin: Math.max(0, Math.min(...ys) - o.pad), yMax: Math.max(...ys) + o.pad, yFmt: o.yFmt,
+      aria: `${o.name}, daily and 7-day average`,
+      refs: o.ref != null ? [{ y: o.ref, label: o.refLabel }] : [],
+      series: [
+        { pts: m.map(p => ({ date: p.date, y: o.scale(p.value), marker: 'dot' })), line: false },
+        { pts: m.map(p => ({ date: p.date, y: o.scale(p.mean), tip: o.tip(p, byDate.get(p.date) || {}) })), width: 2, markers: false }
+      ]
+    }) + legend([{ label: 'daily', marker: 'dot' }, { label: '7-day avg', line: true }]);
+    return { meta: o.meta(m[m.length - 1]), html };
+  }
+
+  const sleepChart = width => dailyChart({
+    id: 'sleep', field: 'sleepH', name: 'sleep', scale: v => v, pad: 0.5, yFmt: v => `${v}h`,
+    ref: 7, refLabel: '7 h',
+    tip: (p, d) => `${p.date}<br>${p.value.toFixed(1)} h night${d.napH ? ` + ${d.napH} h nap` : ''}<br><b>7-day avg ${p.mean.toFixed(1)} h</b>`,
+    meta: p => `7-day avg ${p.mean.toFixed(1)} h`
+  }, width);
+
+  const stepsChart = width => dailyChart({
+    id: 'steps', field: 'steps', name: 'steps', scale: v => v / 1000, pad: 2, yFmt: v => `${v}k`,
+    tip: p => `${p.date}<br>${Math.round(p.value).toLocaleString()} steps<br><b>7-day avg ${Math.round(p.mean).toLocaleString()}</b>`,
+    meta: p => `7-day avg ${(p.mean / 1000).toFixed(1)}k`
+  }, width);
+
   // ---------- RR small multiples ----------
   const RR_STRENGTH = ['pull', 'squat', 'dip', 'hinge', 'row', 'push'];
   const RR_CORE = [
@@ -315,7 +357,7 @@
   const exById = id => (PROGRAM.exercises || []).find(e => e.id === id) || {};
 
   function rrMultiples(width) {
-    const sessions = (state.rrSessions || []).filter(s => s && s.date);
+    const sessions = (state.rrSessions || []).filter(s => s && inRange(s.date));
     if (!sessions.length) return '<p class="muted">No RR sessions logged yet.</p>';
     const dates = sessions.map(s => s.date).sort();
     const x0 = dates[0], x1 = dates[dates.length - 1];
@@ -368,12 +410,21 @@
     { id: 'pace', fn: paceChart },
     { id: 'hr', fn: hrChart },
     { id: 'vo2', fn: vo2Chart },
-    { id: 'rhr', fn: rhrChart }
+    { id: 'rhr', fn: rhrChart },
+    { id: 'sleep', fn: sleepChart },
+    { id: 'steps', fn: stepsChart }
   ];
 
+  function syncRangeButtons() {
+    document.querySelectorAll('#dash-charts-bar [data-range]').forEach(b => {
+      b.setAttribute('aria-pressed', String(+b.dataset.range === rangeDays));
+    });
+  }
+
   function draw() {
-    const root = document.getElementById('view-charts');
+    const root = document.getElementById('dash-charts');
     if (!root || !state || !root.offsetParent) return; // hidden tab: redraw when shown
+    syncRangeButtons();
     TILES.forEach(t => {
       const body = document.getElementById('ch-' + t.id);
       if (!body) return;
@@ -418,8 +469,15 @@
   }
 
   function init() {
-    const root = document.getElementById('view-charts');
+    const root = document.getElementById('dash-charts');
     if (!root) return;
+    root.addEventListener('click', e => {
+      const b = e.target.closest('[data-range]');
+      if (!b) return;
+      rangeDays = +b.dataset.range;
+      try { localStorage.setItem(RANGE_KEY, String(rangeDays)); } catch (err) {}
+      draw();
+    });
     root.addEventListener('pointermove', onMove);
     root.addEventListener('pointerdown', onMove);
     root.addEventListener('pointerleave', hide);
