@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<HealthData>
+<Record type="HKCategoryTypeIdentifierSleepAnalysis" sourceName="Watch" value="HKCategoryValueSleepAnalysisAsleepCore" startDate="2026-11-14 22:58:00 +0200" endDate="2026-11-15 00:30:00 +0200"/>
+<Record type="HKCategoryTypeIdentifierSleepAnalysis" sourceName="Watch" value="HKCategoryValueSleepAnalysisAsleepDeep" startDate="2026-11-14 22:58:00 +0200" endDate="2026-11-14 23:40:00 +0200"/>
+<Record type="HKCategoryTypeIdentifierSleepAnalysis" sourceName="Watch" value="HKCategoryValueSleepAnalysisAwake" startDate="2026-11-15 00:30:00 +0200" endDate="2026-11-15 00:40:00 +0200"/>
+<Record type="HKCategoryTypeIdentifierSleepAnalysis" sourceName="Watch" value="HKCategoryValueSleepAnalysisAsleepREM" startDate="2026-11-15 00:40:00 +0200" endDate="2026-11-15 06:32:00 +0200"/>
+<Record type="HKCategoryTypeIdentifierSleepAnalysis" sourceName="iPhone" value="HKCategoryValueSleepAnalysisAsleepUnspecified" startDate="2026-11-14 23:00:00 +0200" endDate="2026-11-15 06:00:00 +0200"/>
+<Record type="HKQuantityTypeIdentifierHeartRate" sourceName="Watch" unit="count/min" value="72" startDate="2026-11-14 23:05:00 +0200" endDate="2026-11-14 23:05:00 +0200"/>
+<Record type="HKQuantityTypeIdentifierHeartRate" sourceName="Watch" unit="count/min" value="49" startDate="2026-11-15 04:00:00 +0200" endDate="2026-11-15 04:00:00 +0200"/>
+<Record type="HKQuantityTypeIdentifierHeartRate" sourceName="Watch" unit="count/min" value="174" startDate="2026-11-15 09:55:00 +0200" endDate="2026-11-15 09:55:00 +0200"/>
+<Record type="HKCategoryTypeIdentifierSleepAnalysis" sourceName="Watch" value="HKCategoryValueSleepAnalysisAsleepCore" startDate="2026-11-15 14:30:00 +0200" endDate="2026-11-15 16:30:00 +0200"/>
+</HealthData>

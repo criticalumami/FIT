@@ -160,5 +160,18 @@ class FitTests(unittest.TestCase):
         self.assertRegex(fit.now_iso(), r"^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d\.\d{3}Z$")
 
 
+    def test_sleep_counts_whole_night_on_wake_day_with_sleeping_hr(self):
+        """A night from 22:58 to 06:32 counts whole on the wake-up day (not split at midnight),
+        phone + watch are not added together, naps are separate, and sleeping HR comes from samples."""
+        path = os.path.join(os.path.dirname(__file__), "sleep_sample.xml")
+        days = {d["date"]: d for d in fit.health_days_from_export(path, "2026-11-14")}
+        d = days["2026-11-15"]
+        self.assertAlmostEqual(d["sleepH"], 7.4, delta=0.05)
+        self.assertAlmostEqual(d["napH"], 2.0)
+        self.assertEqual(d["sleepHrMin"], 49)
+        self.assertFalse(days.get("2026-11-14", {}).get("sleepH"))
+
+
 if __name__ == "__main__":
     unittest.main()
+

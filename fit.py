@@ -17,6 +17,7 @@ truth; program.js holds the generic exercise ladders and default schedule.
   (log-* commands sync automatically before and after; add --offline to skip)
 """
 import argparse
+import bisect
 import csv
 import io
 import json
@@ -442,7 +443,8 @@ def parse_health(xml_path, since):
     counts = Counter()
     daily = defaultdict(lambda: defaultdict(lambda: defaultdict(float)))  # day -> type -> source -> sum
     points = defaultdict(lambda: defaultdict(dict))  # type -> source -> day -> value (last wins)
-    sleep = defaultdict(float)
+    sleep_segs = defaultdict(list)  # source -> [(start, end)] asleep intervals
+    hr_samples = []  # (time, bpm) for sleeping-HR stats
     activity = {}
     workouts = []
     for _, el in ET.iterparse(xml_path, events=("end",)):
@@ -464,8 +466,13 @@ def parse_health(xml_path, since):
                     try:
                         t1 = datetime.strptime(sdate[:19], "%Y-%m-%d %H:%M:%S")
                         t2 = datetime.strptime(a["endDate"][:19], "%Y-%m-%d %H:%M:%S")
-                        sleep[a["endDate"][:10]] += (t2 - t1).total_seconds() / 3600
+                        sleep_segs[a.get("sourceName", "")].append((t1, t2))
                     except (KeyError, ValueError):
+                        pass
+                elif rtype == HK + "HeartRate":
+                    try:
+                        hr_samples.append((datetime.strptime(sdate[:19], "%Y-%m-%d %H:%M:%S"), float(a.get("value", ""))))
+                    except ValueError:
                         pass
             el.clear()
         elif tag == "Workout":
@@ -489,7 +496,55 @@ def parse_health(xml_path, since):
         for src in (srcs or list(by_src)):
             merged[t].update(by_src[src])
     points = merged
-    return {"counts": counts, "daily": daily, "points": points, "sleep": sleep, "activity": activity, "workouts": workouts}
+    sleep, sleep_hr, naps = sleep_nights(sleep_segs, hr_samples)
+    return {"counts": counts, "daily": daily, "points": points, "sleep": sleep, "sleepHr": sleep_hr, "naps": naps,
+            "activity": activity, "workouts": workouts}
+
+
+def night_of(t):
+    """The date a sleep segment counts for: anything ending after 18:00 belongs to the next morning,
+    so a night that starts at 22:58 and ends at 06:32 is counted whole on the wake-up day."""
+    return (t + timedelta(hours=6)).date().isoformat()
+
+
+def sleep_nights(segs_by_source, hr_samples):
+    """Hours asleep and sleeping-HR stats per night. Sources are not added together (phone + watch
+    would double count): each night uses the source with the most asleep time, with overlaps merged."""
+    nights = defaultdict(dict)  # night -> source -> merged intervals
+    for src, segs in segs_by_source.items():
+        per = defaultdict(list)
+        for t1, t2 in segs:
+            if t2 > t1:
+                nap = 10 <= t2.hour < 18  # daytime nap: reported separately as napH
+                per[(night_of(t2), nap)].append((t1, t2))
+        for n, iv in per.items():
+            iv.sort()
+            merged = [list(iv[0])]
+            for t1, t2 in iv[1:]:
+                if t1 <= merged[-1][1]:
+                    merged[-1][1] = max(merged[-1][1], t2)
+                else:
+                    merged.append([t1, t2])
+            nights[n][src] = merged
+    sleep, sleep_hr, naps = {}, {}, {}
+    hr_samples.sort()
+    times = [t for t, _ in hr_samples]
+    for (n, nap), by_src in nights.items():
+        best = max(by_src.values(), key=lambda m: sum((b - a).total_seconds() for a, b in m))
+        hours = sum((b - a).total_seconds() for a, b in best) / 3600
+        if nap:
+            naps[n] = hours
+            continue
+        sleep[n] = hours
+        vals = []
+        for a, b in best:
+            i = bisect.bisect_left(times, a)
+            while i < len(times) and times[i] <= b:
+                vals.append(hr_samples[i][1])
+                i += 1
+        if vals:
+            sleep_hr[n] = {"min": min(vals), "avg": sum(vals) / len(vals)}
+    return sleep, sleep_hr, naps
 
 
 def best_source(by_src):
@@ -708,9 +763,9 @@ def _num(v, integer=False):
         return None
 
 
-DAY_FIELDS = ("weightKg", "restingHr", "steps", "activeKcal", "sleepH", "vo2")
-INTEGER_FIELDS = {"restingHr", "steps", "activeKcal", "hr", "maxHr", "power", "kcal"}
-DAILY_FIELDS = ("restingHr", "steps", "activeKcal", "sleepH", "vo2")
+DAY_FIELDS = ("weightKg", "restingHr", "steps", "activeKcal", "sleepH", "napH", "sleepHrMin", "sleepHrAvg", "vo2")
+INTEGER_FIELDS = {"restingHr", "sleepHrMin", "sleepHrAvg", "steps", "activeKcal", "hr", "maxHr", "power", "kcal"}
+DAILY_FIELDS = ("restingHr", "steps", "activeKcal", "sleepH", "napH", "sleepHrMin", "sleepHrAvg", "vo2")
 
 
 def normalize_health_day(p):
@@ -791,7 +846,7 @@ def apply_health_day(data, day, now=None):
     daily = {k: day[k] for k in DAILY_FIELDS if k in day}
     if daily:
         entry = {"id": f"d-{d}", "date": d}
-        entry.update({k: (round(v, 1) if k in ("sleepH", "vo2") else int(round(v))) for k, v in daily.items()})
+        entry.update({k: (round(v, 1) if k in ("sleepH", "napH", "vo2") else int(round(v))) for k, v in daily.items()})
         upsert("dailyLog", entry, list(daily))
 
     for r in day["runs"]:
@@ -840,7 +895,7 @@ def health_days_from_export(path, since):
         h = parse_health(path, read_from)
     p = h["points"]
     days = {}
-    for d in sorted(set(h["daily"]) | set(h["activity"]) | set(h["sleep"])):
+    for d in sorted(set(h["daily"]) | set(h["activity"]) | set(h["sleep"]) | set(h["naps"])):
         dd = h["daily"].get(d, {})
         act = h["activity"].get(d)
         raw = {
@@ -852,6 +907,9 @@ def health_days_from_export(path, since):
             "activeKcal": float(act["activeEnergyBurned"]) if act and act.get("activeEnergyBurned")
             else best_source(dd.get(HK + "ActiveEnergyBurned", {})) or None,
             "sleepH": h["sleep"].get(d),
+            "sleepHrMin": (h["sleepHr"].get(d) or {}).get("min"),
+            "sleepHrAvg": (h["sleepHr"].get(d) or {}).get("avg"),
+            "napH": h["naps"].get(d),
             "runs": [],
         }
         days[d] = raw
