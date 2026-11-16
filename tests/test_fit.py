@@ -170,6 +170,7 @@ class FitTests(unittest.TestCase):
         self.assertAlmostEqual(d["napH"], 2.0)
         self.assertEqual(d["sleepHrMin"], 49)
         self.assertFalse(days.get("2026-11-14", {}).get("sleepH"))
+        self.assertAlmostEqual(d["walkKmh"], 5.0)
 
 
 if __name__ == "__main__":

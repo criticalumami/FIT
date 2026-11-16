@@ -445,6 +445,7 @@ def parse_health(xml_path, since):
     points = defaultdict(lambda: defaultdict(dict))  # type -> source -> day -> value (last wins)
     sleep_segs = defaultdict(list)  # source -> [(start, end)] asleep intervals
     hr_samples = []  # (time, bpm) for sleeping-HR stats
+    walk = defaultdict(list)  # day -> walking speeds in km/h
     activity = {}
     workouts = []
     for _, el in ET.iterparse(xml_path, events=("end",)):
@@ -468,6 +469,12 @@ def parse_health(xml_path, since):
                         t2 = datetime.strptime(a["endDate"][:19], "%Y-%m-%d %H:%M:%S")
                         sleep_segs[a.get("sourceName", "")].append((t1, t2))
                     except (KeyError, ValueError):
+                        pass
+                elif rtype == HK + "WalkingSpeed":
+                    try:
+                        v = float(a.get("value", ""))
+                        walk[day].append(v * 1.609344 if a.get("unit", "").startswith("mi") else v)
+                    except ValueError:
                         pass
                 elif rtype == HK + "HeartRate":
                     try:
@@ -498,6 +505,7 @@ def parse_health(xml_path, since):
     points = merged
     sleep, sleep_hr, naps = sleep_nights(sleep_segs, hr_samples)
     return {"counts": counts, "daily": daily, "points": points, "sleep": sleep, "sleepHr": sleep_hr, "naps": naps,
+            "walkKmh": {d: sum(v) / len(v) for d, v in walk.items() if v},
             "activity": activity, "workouts": workouts}
 
 
@@ -763,9 +771,9 @@ def _num(v, integer=False):
         return None
 
 
-DAY_FIELDS = ("weightKg", "restingHr", "steps", "activeKcal", "sleepH", "napH", "sleepHrMin", "sleepHrAvg", "vo2")
+DAY_FIELDS = ("weightKg", "restingHr", "steps", "activeKcal", "sleepH", "napH", "sleepHrMin", "sleepHrAvg", "walkKmh", "vo2")
 INTEGER_FIELDS = {"restingHr", "sleepHrMin", "sleepHrAvg", "steps", "activeKcal", "hr", "maxHr", "power", "kcal"}
-DAILY_FIELDS = ("restingHr", "steps", "activeKcal", "sleepH", "napH", "sleepHrMin", "sleepHrAvg", "vo2")
+DAILY_FIELDS = ("restingHr", "steps", "activeKcal", "sleepH", "napH", "sleepHrMin", "sleepHrAvg", "walkKmh", "vo2")
 
 
 def normalize_health_day(p):
@@ -846,7 +854,7 @@ def apply_health_day(data, day, now=None):
     daily = {k: day[k] for k in DAILY_FIELDS if k in day}
     if daily:
         entry = {"id": f"d-{d}", "date": d}
-        entry.update({k: (round(v, 1) if k in ("sleepH", "napH", "vo2") else int(round(v))) for k, v in daily.items()})
+        entry.update({k: (round(v, 1) if k in ("sleepH", "napH", "walkKmh", "vo2") else int(round(v))) for k, v in daily.items()})
         upsert("dailyLog", entry, list(daily))
 
     for r in day["runs"]:
@@ -895,7 +903,7 @@ def health_days_from_export(path, since):
         h = parse_health(path, read_from)
     p = h["points"]
     days = {}
-    for d in sorted(set(h["daily"]) | set(h["activity"]) | set(h["sleep"]) | set(h["naps"])):
+    for d in sorted(set(h["daily"]) | set(h["activity"]) | set(h["sleep"]) | set(h["naps"]) | set(h["walkKmh"])):
         dd = h["daily"].get(d, {})
         act = h["activity"].get(d)
         raw = {
@@ -910,6 +918,7 @@ def health_days_from_export(path, since):
             "sleepHrMin": (h["sleepHr"].get(d) or {}).get("min"),
             "sleepHrAvg": (h["sleepHr"].get(d) or {}).get("avg"),
             "napH": h["naps"].get(d),
+            "walkKmh": h["walkKmh"].get(d),
             "runs": [],
         }
         days[d] = raw
