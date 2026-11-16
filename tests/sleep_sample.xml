@@ -9,4 +9,6 @@
 <Record type="HKQuantityTypeIdentifierHeartRate" sourceName="Watch" unit="count/min" value="49" startDate="2026-11-15 04:00:00 +0200" endDate="2026-11-15 04:00:00 +0200"/>
 <Record type="HKQuantityTypeIdentifierHeartRate" sourceName="Watch" unit="count/min" value="174" startDate="2026-11-15 09:55:00 +0200" endDate="2026-11-15 09:55:00 +0200"/>
 <Record type="HKCategoryTypeIdentifierSleepAnalysis" sourceName="Watch" value="HKCategoryValueSleepAnalysisAsleepCore" startDate="2026-11-15 14:30:00 +0200" endDate="2026-11-15 16:30:00 +0200"/>
+<Record type="HKQuantityTypeIdentifierWalkingSpeed" sourceName="iPhone" unit="km/hr" value="4.8" startDate="2026-11-15 12:00:00 +0200" endDate="2026-11-15 12:01:00 +0200"/>
+<Record type="HKQuantityTypeIdentifierWalkingSpeed" sourceName="iPhone" unit="km/hr" value="5.2" startDate="2026-11-15 13:00:00 +0200" endDate="2026-11-15 13:01:00 +0200"/>
 </HealthData>
