@@ -174,7 +174,9 @@ class InboxAndExportTests(unittest.TestCase):
                     self.assertEqual(day["restingHr"], 73)
                     self.assertEqual(day["steps"], 29376)
                     self.assertEqual(day["sleepH"], 7.0)
-                    self.assertEqual(day["runs"], [{"km": 5.01, "min": 35.6, "hr": 159, "maxHr": 185, "power": 193}])
+                    self.assertIn("detail", day["runs"][0])
+                    basic = {k: v for k, v in day["runs"][0].items() if k != "detail"}
+                    self.assertEqual(basic, {"km": 5.01, "min": 35.6, "hr": 159, "maxHr": 185, "power": 193})
                     data = blank()
                     fit.apply_health_day(data, day, NOW)
                     self.assertEqual(data["runLog"][0]["type"], "Tempo / Threshold Run")

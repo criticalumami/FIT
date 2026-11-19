@@ -27,6 +27,8 @@ import shutil
 import subprocess
 import sys
 import xml.etree.ElementTree as ET
+
+import run_detail
 from collections import Counter, defaultdict
 from datetime import date, datetime, timedelta, timezone
 
@@ -446,6 +448,7 @@ def parse_health(xml_path, since):
     sleep_segs = defaultdict(list)  # source -> [(start, end)] asleep intervals
     hr_samples = []  # (time, bpm) for sleeping-HR stats
     walk = defaultdict(list)  # day -> walking speeds in km/h
+    run_samples = {}  # per-sample HR/distance/power/... for run detail (run_detail.py)
     activity = {}
     workouts = []
     for _, el in ET.iterparse(xml_path, events=("end",)):
@@ -456,6 +459,7 @@ def parse_health(xml_path, since):
             counts[rtype] += 1
             if sdate >= since:
                 day = sdate[:10]
+                run_detail.collect_sample(run_samples, a)
                 try:
                     if rtype in SUM_TYPES:
                         daily[day][rtype][a.get("sourceName", "")] += float(a.get("value", ""))
@@ -486,6 +490,7 @@ def parse_health(xml_path, since):
             if el.attrib.get("startDate", "") >= since:
                 w = dict(el.attrib)
                 w["stats"] = {c.attrib.get("type", ""): c.attrib for c in el if c.tag == "WorkoutStatistics"}
+                w["events"], w["metadata"], w["route"] = run_detail.workout_extras(el)
                 workouts.append(w)
             el.clear()
         elif tag == "ActivitySummary":
@@ -505,7 +510,7 @@ def parse_health(xml_path, since):
     points = merged
     sleep, sleep_hr, naps = sleep_nights(sleep_segs, hr_samples)
     return {"counts": counts, "daily": daily, "points": points, "sleep": sleep, "sleepHr": sleep_hr, "naps": naps,
-            "walkKmh": {d: sum(v) / len(v) for d, v in walk.items() if v},
+            "walkKmh": {d: sum(v) / len(v) for d, v in walk.items() if v}, "runSamples": run_samples,
             "activity": activity, "workouts": workouts}
 
 
@@ -821,7 +826,10 @@ def classify_run(r):
     return "Aerobic Run"
 
 
-def apply_health_day(data, day, now=None):
+RUN_DETAIL_FIELDS = ("splits", "segments", "strides", "zones", "extras", "detail")
+
+
+def apply_health_day(data, day, now=None, details_out=None):
     """Merge one normalized health day into data. Returns a list of change descriptions."""
     now = now or now_iso()
     d = day["date"]
@@ -865,7 +873,14 @@ def apply_health_day(data, day, now=None):
         entry = {"id": rid, "date": d, "type": classify_run(r), "km": r["km"], "min": r["min"],
                  "notes": "Imported from Apple Health"}
         entry.update({k: r[k] for k in ("hr", "maxHr", "power", "kcal") if k in r})
-        upsert("runLog", entry, ["km", "min", "hr", "maxHr", "power", "kcal"])
+        fields = ["km", "min", "hr", "maxHr", "power", "kcal"]
+        if r.get("detail"):
+            entry.update({k: v for k, v in run_detail.compact(r["detail"]).items() if v is not None})
+            entry["detail"] = f"runs/{rid}.json"
+            fields += [k for k in RUN_DETAIL_FIELDS if k in entry]
+            if details_out is not None:
+                details_out[rid] = r["detail"]
+        upsert("runLog", entry, fields)
     return changes
 
 
@@ -888,19 +903,48 @@ def find_export_xml(names):
     sys.exit("no export.xml in the zip; it contains:\n  " + "\n  ".join(names[:30]))
 
 
-def health_days_from_export(path, since):
-    """Normalized health days from a full Export.xml or the export .zip."""
+def health_days_from_export(path, since, details=True):
+    """Normalized health days from a full Export.xml or the export .zip. With details, each run
+    also gets a second-by-second breakdown (run_detail.build_run_detail) under run["detail"]."""
     import zipfile
     # Read one extra day: a night's sleep starts the evening before it is counted,
     # so the first day of the window would otherwise get only part of it.
     read_from = (date.fromisoformat(since) - timedelta(days=1)).isoformat()
-    if path.lower().endswith(".zip"):
-        with zipfile.ZipFile(path) as zf:
-            name = find_export_xml(zf.namelist())
-            with zf.open(name) as fh:
+    zf = zipfile.ZipFile(path) if path.lower().endswith(".zip") else None
+    try:
+        if zf:
+            with zf.open(find_export_xml(zf.namelist())) as fh:
                 h = parse_health(fh, read_from)
-    else:
-        h = parse_health(path, read_from)
+        else:
+            h = parse_health(path, read_from)
+        return _health_days(h, since, zf, os.path.dirname(os.path.abspath(path)) if not zf else None, details)
+    finally:
+        if zf:
+            zf.close()
+
+
+def _route_points(route, zf, folder):
+    """GPS points of a workout route, from the zip or from a workout-routes folder next to Export.xml."""
+    if not route:
+        return []
+    base = route.rsplit("/", 1)[-1]
+    try:
+        if zf:
+            name = next((n for n in zf.namelist() if n.endswith("/" + base) or n == base), None)
+            if name:
+                with zf.open(name) as fh:
+                    return run_detail.parse_gpx(fh)
+        elif folder:
+            for cand in (os.path.join(folder, route.lstrip("/")), os.path.join(folder, "workout-routes", base)):
+                if os.path.exists(cand):
+                    with open(cand, "rb") as fh:
+                        return run_detail.parse_gpx(fh)
+    except ET.ParseError:
+        pass
+    return []
+
+
+def _health_days(h, since, zf, folder, details):
     p = h["points"]
     days = {}
     for d in sorted(set(h["daily"]) | set(h["activity"]) | set(h["sleep"]) | set(h["naps"]) | set(h["walkKmh"])):
@@ -922,6 +966,7 @@ def health_days_from_export(path, since):
             "runs": [],
         }
         days[d] = raw
+    detail_of = {}
     for w in h["workouts"]:
         if w.get("workoutActivityType") != "HKWorkoutActivityTypeRunning":
             continue
@@ -930,12 +975,31 @@ def health_days_from_export(path, since):
         # Export.xml numbers are machine-formatted ("146.876"): parse them here, not with the
         # locale-guessing _num, which would read that as 146876 for whole-number fields.
         g = lambda t, k: _xml_float((st.get(t) or {}).get(k))  # noqa: E731
-        days.setdefault(d, {"date": d, "runs": []})["runs"].append({
+        run = {
             "km": g("DistanceWalkingRunning", "sum"), "min": _xml_float(w.get("duration")),
             "hr": g("HeartRate", "average"), "maxHr": g("HeartRate", "maximum"),
             "power": g("RunningPower", "average"), "kcal": g("ActiveEnergyBurned", "sum"),
-        })
-    return [normalize_health_day(days[d]) for d in sorted(days) if d >= since]
+        }
+        if details and d >= since:
+            try:
+                det = run_detail.build_run_detail(w, h["runSamples"], _route_points(w.get("route"), zf, folder))
+            except Exception as e:  # a detail problem must never block the basic import
+                print(f"run detail failed for {d}: {e}", file=sys.stderr)
+                det = None
+            if det:
+                detail_of[(d, round(run["km"] or 0, 2))] = det
+        days.setdefault(d, {"date": d, "runs": []})["runs"].append(run)
+    out = []
+    for d in sorted(days):
+        if d < since:
+            continue
+        day = normalize_health_day(days[d])
+        for r in day["runs"]:
+            det = detail_of.get((d, r["km"]))
+            if det:
+                r["detail"] = det
+        out.append(day)
+    return out
 
 
 def cmd_import_health(args):
@@ -944,9 +1008,20 @@ def cmd_import_health(args):
         DATA_PATH = os.path.abspath(args.data)
     auto_sync(args, "before")
     data = load_data()
-    changes = []
+    changes, details = [], {}
     for day in health_days_from_export(os.path.expanduser(args.export), args.since):
-        changes += apply_health_day(data, day)
+        changes += apply_health_day(data, day, details_out=details)
+    if details:
+        folder = os.path.join(os.path.dirname(os.path.abspath(DATA_PATH)), "runs")
+        os.makedirs(folder, exist_ok=True)
+        for rid, det in details.items():
+            path = os.path.join(folder, f"{rid}.json")
+            text = json.dumps(dict(det, id=rid), separators=(",", ":"), sort_keys=True)
+            old = open(path, encoding="utf-8").read() if os.path.exists(path) else None
+            if old != text:
+                with open(path, "w", encoding="utf-8") as f:
+                    f.write(text)
+                changes.append(f"~ runs/{rid}.json")
     if changes:
         save_data(data)
         if args.log:
