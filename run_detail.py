@@ -133,9 +133,14 @@ def _main_source(samples, t0, t1, fallback):
     counts = {}
     for s in _in_window(samples, t0, t1):
         counts[s[3]] = counts.get(s[3], 0) + 1
-    if fallback in counts:
+    if not counts:
+        return None
+    best = max(counts, key=counts.get)
+    # Prefer the workout's own source, unless another device (e.g. AirPods or a strap
+    # recording HR) has far more samples: then the workout source holds only stragglers.
+    if fallback in counts and counts[fallback] * 4 >= counts[best]:
         return fallback
-    return max(counts, key=counts.get) if counts else None
+    return best
 
 
 def _interp(points, n, t0, max_gap=20):
