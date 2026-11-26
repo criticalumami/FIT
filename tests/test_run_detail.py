@@ -8,6 +8,7 @@ from datetime import datetime, timedelta, timezone
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 import fit  # noqa: E402
+import run_detail  # noqa: E402
 
 TZ = timezone(timedelta(hours=2))
 T0 = datetime(2026, 11, 19, 7, 0, 0, tzinfo=TZ)
@@ -124,6 +125,18 @@ class RunDetailTests(unittest.TestCase):
             self.assertEqual(run["detail"], f"runs/{run['id']}.json")
             self.assertEqual(len([s for s in run["segments"] if s["kind"] == "rep"]), 5)
             self.assertTrue(os.path.exists(os.path.join(d, run["detail"])))
+
+
+
+class MainSourceTest(unittest.TestCase):
+    def test_prefers_workout_source(self):
+        s = [(t, t, 150, "Watch") for t in range(10)] + [(t, t, 150, "Phone") for t in range(20)]
+        self.assertEqual(run_detail._main_source(s, 0, 30, "Watch"), "Watch")
+
+    def test_other_device_when_workout_source_has_stragglers(self):
+        # HR recorded by AirPods while the workout source logged only start/end values
+        s = [(0, 0, 71, "Watch"), (30, 30, 153, "Watch")] + [(t, t, 160, "Bluetooth Device") for t in range(30)]
+        self.assertEqual(run_detail._main_source(s, 0, 30, "Watch"), "Bluetooth Device")
 
 
 if __name__ == "__main__":
